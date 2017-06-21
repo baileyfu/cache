@@ -2,10 +2,10 @@
 可接入本地缓存和第三方缓存；注解方式使用，切面中调用缓存实现<br/>
 
 ### e.g
-@RCache(key="#user.id")
-public String getBankCard(User user){
-...
-}
+@RCache(key="#user.id")<br/>
+public String getBankCard(User user){<br/>
+...<br/>
+}<br/>
 
 ### 已接入的本地缓存：
 SingleMapCache            单Map（ConcurrentHashMap）实现，不自动清理<br/>
