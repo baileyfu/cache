@@ -8,23 +8,20 @@ cm.putToRemote(key,value);<br/>
 ### e.g
 Spring配置增加：
 
-	
 	<bean class="xcache.spring.CacheBeanPostProcessor"/>
-	<bean id="localCache" class="xcache.bean.SingleMapCache"/>
-	<!-- 第三方缓存以RedisCache为例,需配置redisTemplate -->
-	<bean id="remoteCache" class="xcache.redis.RedisCache">
-			<constructor-arg index="0">
-				<ref bean="redisTemplate"/>
-			</constructor-arg>
-	</bean>
 	<bean class="xcache.spring.CacheConfiguration">
 			<constructor-arg index="0">
-				<!-- 可为Null -->
-				<ref bean="localCache"/>
+				<!-- LocalCache;可为Null -->
+				<bean class="xcache.bean.SingleMapCache"/>
 			</constructor-arg>
 			<constructor-arg index="1">
-				<!-- 可为Null -->
-				<ref bean="remoteCache"/>
+				<!-- RemoteCache;可为Null -->
+				<bean id="remoteCache" class="xcache.redis.RedisCache">
+						<constructor-arg>
+							<!-- 需配置org.springframework.data.redis.core.RedisTemplate -->
+							<ref bean="redisTemplate"/>
+						</constructor-arg>
+				</bean>
 			</constructor-arg>
 	</bean>
 	
@@ -38,6 +35,14 @@ Spring配置增加：
 	public String getBankCard(User user){
 	...
 	}
+	@RCache(key="#userInfo[0]")
+	public String getBankCard(String[] userInfo){
+	...
+	}
+	@RCache(key="#userInfo['id'] + '-' + #userInfo['name']")
+	public String getBankCard(Map userInfo){
+	...
+	}
 	@LCache(key="myConfig",remove={"updateConfig","deleteConfig"},throwable=true,expiring=10,timeUnit=TimeUnit.MINUTE,prefix="PREFIX",suffix="SUFFIX")
 	public Map MyConfig(){
 	...
@@ -47,19 +52,27 @@ Spring配置增加：
 <table>
 	<tr align="left">
 		<td>SingleMapCache</td>
-		<td>单Map实现，不自动清理</td>
+		<td>单Map实现，不自动清理，线程安全</td>
 	</tr>
 	<tr align="left">
 		<td>SingleMapAutoCleanCache</td>
-		<td>单Map实现，可自动清理过期内容</td>
+		<td>单Map实现，可自动清理过期内容，线程安全</td>
 	</tr>
 	<tr align="left">
 		<td>MultiMapCache</td>
-		<td>双Map实现，不自动清理</td>
+		<td>双Map实现，不自动清理，线程安全</td>
 	</tr>
 	<tr align="left">
 		<td>MultiMapAutoCleanCache</td>
-		<td>双Map实现，可自动清理过期内容</td>
+		<td>双Map实现，可自动清理过期内容，线程安全</td>
+	</tr>
+	<tr align="left">
+		<td>LRUCache</td>
+		<td>单LURMap实现，不自动清理，线程安全</td>
+	</tr>
+	<tr align="left">
+		<td>MultiLRUCache</td>
+		<td>双LURMap实现，不自动清理，线程安全</td>
 	</tr>
 	<tr align="left">
 		<td>EHCache</td>
