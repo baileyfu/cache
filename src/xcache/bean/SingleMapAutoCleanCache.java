@@ -18,6 +18,11 @@ import xcache.em.TimeUnit;
 public class SingleMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> {
 	private Map<K, Entity> cacheMap;
 
+	public SingleMapAutoCleanCache(){
+		super();
+		init();
+	}
+	
 	/**
 	 * 清理间隔(单位：分钟)
 	 * 
@@ -25,9 +30,11 @@ public class SingleMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> {
 	 */
 	public SingleMapAutoCleanCache(int clearInterval) {
 		super(clearInterval);
+		init();
+	}
+	private void init(){
 		cacheMap = new ConcurrentHashMap<>();
 	}
-
 	public V get(K key) throws Exception {
 		Entity entity = cacheMap.get(key);
 		return entity == null ? null : entity.getElement();

@@ -1,8 +1,8 @@
 package xcache.aspect;
 
 import java.lang.reflect.Method;
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -103,12 +103,12 @@ public class CGLibEnhancer extends EnhancingResolver {
 
 	private Object excuteRemove(Method method, Function<AnnoBean, Object> renderKey, Supplier<Object> original) throws Exception {
 		Object result = original.get();
-		Collection<AnnoBean> annoBeanColl = annoInfo4remove(method.getName());
-		for (AnnoBean annoBean : annoBeanColl) {
-			Object key = renderKey.apply(annoBean);
+		List<AnnoBean> annoBeanList = annoInfo4remove(method.getName());
+		for (AnnoBean annoBean:annoBeanList) {
+			Object key=renderKey.apply(annoBean);
 			/** 若方法无参数，则无需清除缓存 */
 			if (key == null) {
-				return result;
+				continue;
 			}
 			CacheManager cacheManager = CacheManager.getInstance();
 			$doc(annoBean, () -> {

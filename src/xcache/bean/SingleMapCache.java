@@ -13,7 +13,7 @@ import xcache.em.TimeUnit;
  * @version 1.0
  * @date 2017-06-12 17:18
  */
-public class SingleMapCache<K, V> implements LocalCache<K, V> {
+public class SingleMapCache<K, V> implements LocalCache<K, V>, MapCache<K, V> {
 	private Map<K, V> cacheMap;
 
 	public SingleMapCache() {
@@ -25,40 +25,13 @@ public class SingleMapCache<K, V> implements LocalCache<K, V> {
 	}
 
 	@Override
-	public void put(K key, V value) throws Exception {
-		cacheMap.put(key, value);
-		System.out.println("A-------------->"+cacheMap);
-	}
-
-	@Override
 	public void put(K key, V value, long expiring, TimeUnit timeUnit) throws Exception {
-		cacheMap.put(key, value);
-		System.out.println("B-------------->"+cacheMap);
+		put(key, value);
 	}
 
 	@Override
-	public void remove(K key) throws Exception {
-		cacheMap.remove(key);
-		System.out.println("C-------------->"+key+"==="+cacheMap);
+	public Map<K, V> value() {
+		return cacheMap;
 	}
 
-	@Override
-	public V get(K key) throws Exception {
-		return cacheMap.get(key);
-	}
-
-	@Override
-	public int size() {
-		return cacheMap.size();
-	}
-
-	@Override
-	public void clear() throws Exception {
-		cacheMap.clear();
-	}
-
-	@Override
-	public boolean exists(K key) {
-		return cacheMap.containsKey(key);
-	}
 }

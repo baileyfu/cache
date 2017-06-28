@@ -1,11 +1,13 @@
 package xcache.aspect;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -23,10 +25,9 @@ import xcache.annotation.RCache;
  * @date 2017-06-22 14:27
  */
 public abstract class EnhancingResolver implements CacheEnhancer {
-	/** SpEL的分隔符 */
-	private static final String SPEL_SIGN = "#";
+	private static final String KEY_SIGN = "_";
 	private Map<String, AnnoBean> gmMap = new HashMap<>();
-	private Map<String, Collection<AnnoBean>> rmMap = new HashMap<>();
+	private Map<String, List<AnnoBean>> rmMap = new HashMap<>();
 	private Class<?> clazz;
 
 	public EnhancingResolver(Object target) {
@@ -53,14 +54,16 @@ public abstract class EnhancingResolver implements CacheEnhancer {
 	private void saveRemoveMethods(AnnoBean ab) {
 		if (ab.remove != null && ab.remove.length > 0) {
 			for (String methodName : ab.remove) {
-				/** 一个remove方法可匹配多个缓存方法 */
-				Collection<AnnoBean> abColl = rmMap.get(methodName);
-				if (abColl == null) {
-					abColl = new HashSet<>();
+				if(StringUtils.isNotBlank(methodName)){
+					/** 一个remove方法可匹配多个缓存方法 */
+					List<AnnoBean> abColl = rmMap.get(methodName);
+					if (abColl == null) {
+						abColl = new ArrayList<>();
+					}
+					abColl.add(ab);
 					/** 以方法的名称为key，匹配所有重载方法 */
 					rmMap.put(methodName, abColl);
 				}
-				abColl.add(ab);
 			}
 		}
 	}
@@ -69,7 +72,7 @@ public abstract class EnhancingResolver implements CacheEnhancer {
 		return gmMap.get(methodGenericString);
 	}
 
-	protected Collection<AnnoBean> annoInfo4remove(String methodName) {
+	protected List<AnnoBean> annoInfo4remove(String methodName) {
 		return rmMap.get(methodName);
 	}
 
@@ -93,29 +96,39 @@ public abstract class EnhancingResolver implements CacheEnhancer {
 	 * @return
 	 */
 	protected Object renderKey(AnnoBean annoBean, String[] paramName, Object[] params) {
-		if (params != null && params.length > 0) {
-			Object key = null;
-			if (StringUtils.isBlank(annoBean.key)) {/** 未指定key则以第一个参数作为key */
-				key = BeanUtils.dump(params[0]);
-			} else if (annoBean.key.startsWith(SPEL_SIGN)) {/** SpEL */
+		Object key = null;
+		if (StringUtils.isBlank(annoBean.key)) {/** 未指定key则以第一个参数作为key */
+			key = ArrayUtils.isEmpty(params) ? null : BeanUtils.dump(params[0]);
+		} else {/** 不能解析为SpEL的则以字符串形式作为key */
+			if (!ArrayUtils.isEmpty(params)) {
+				boolean hasMatched = false;
+				Collection<String> existed = new ArrayList<>();
+				ExpressionParser parser = new SpelExpressionParser();
+				StandardEvaluationContext context = new StandardEvaluationContext();
 				for (int i = 0; i < paramName.length; i++) {
 					// 以第一个匹配到的参数为key,若无匹配项则返回null
-					if ((SPEL_SIGN + paramName[i]).equals(annoBean.key) || paramName[i].equals(StringUtils.substringBetween(annoBean.key, SPEL_SIGN, "."))) {
-						ExpressionParser parser = new SpelExpressionParser();
-						StandardEvaluationContext context = new StandardEvaluationContext();
-						context.setVariable(paramName[i], params[i]);
-						key = parser.parseExpression(annoBean.key).getValue(context, Object.class);
-						break;
+					if (!existed.contains(paramName[i])) {
+						existed.add(paramName[i]);
+						if (annoBean.key.contains(paramName[i])) {
+							context.setVariable(paramName[i], params[i]);
+							hasMatched = true;
+						}
 					}
 				}
-				if (key == null) {
-					return null;
-				}
-			} else {/** 指定字符串 */
-				key = annoBean.key;
+				try {
+					key = hasMatched ? parser.parseExpression(annoBean.key).getValue(context, Object.class) : null;
+				} catch (Exception e) {}
 			}
-			return new StringBuilder().append(annoBean.prefix).append(key).append(annoBean.suffix).toString();
+			key = key == null ? annoBean.key : key;
 		}
-		return null;
+		return key == null
+				? null
+				: new StringBuilder()
+						.append(annoBean.prefix)
+						.append(StringUtils.isNotBlank(annoBean.prefix) ? KEY_SIGN : StringUtils.EMPTY)
+						.append(key)
+						.append(StringUtils.isNotBlank(annoBean.suffix) ? KEY_SIGN : StringUtils.EMPTY)
+						.append(annoBean.suffix)
+						.toString();
 	}
 }
