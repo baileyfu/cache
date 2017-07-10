@@ -16,6 +16,7 @@ import org.springframework.expression.spel.support.StandardEvaluationContext;
 import commons.beanutils.BeanUtils;
 import xcache.annotation.LCache;
 import xcache.annotation.RCache;
+import xcache.annotation.XCache;
 
 /**
  * 原类型分析以及key生成
@@ -28,14 +29,18 @@ public abstract class EnhancingResolver implements CacheEnhancer {
 	private static final String KEY_SIGN = "_";
 	private Map<String, AnnoBean> gmMap = new HashMap<>();
 	private Map<String, List<AnnoBean>> rmMap = new HashMap<>();
-	private Class<?> clazz;
 
 	public EnhancingResolver(Object target) {
-		clazz = target.getClass();
+		Class<?> clazz = target.getClass();
+		AnnoBean kpAnnoBean=null;
+		XCache kpCache=clazz.getDeclaredAnnotation(XCache.class);
+		if (kpCache != null) {
+			kpAnnoBean = AnnoBean.toAnnoBean(kpCache, null);
+		}
 		for (Method m : clazz.getDeclaredMethods()) {
 			RCache rCache = m.getDeclaredAnnotation(RCache.class);
 			if (rCache != null) {
-				AnnoBean ab = AnnoBean.toAnnoBean(rCache);
+				AnnoBean ab = AnnoBean.toAnnoBean(rCache,kpAnnoBean);
 				/** 以方法的详细描述为key，匹配唯一方法 */
 				gmMap.put(m.toGenericString(), ab);
 				saveRemoveMethods(ab);
@@ -44,7 +49,7 @@ public abstract class EnhancingResolver implements CacheEnhancer {
 			}
 			LCache lCache = m.getDeclaredAnnotation(LCache.class);
 			if (lCache != null) {
-				AnnoBean ab = AnnoBean.toAnnoBean(lCache);
+				AnnoBean ab = AnnoBean.toAnnoBean(lCache,kpAnnoBean);
 				gmMap.put(m.toGenericString(), ab);
 				saveRemoveMethods(ab);
 			}

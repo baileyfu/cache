@@ -1,5 +1,5 @@
 # 缓存框架
-对缓冲层的抽象，可接入本地缓存和第三方缓存<br/>
+对缓冲层的抽象，简化缓存使用；可接入本地缓存和第三方缓存<br/>
 未指定localCache和remoteCache或者需缓存返回对象的方法的参数为空，则不做任何操作<br/>
 CacheManager为主要操作类，单例实现，可单独使用，如：<br/>
 CacheManager cm=CacheManager.getInstance();<br/>
@@ -27,25 +27,28 @@ Spring配置增加：
 	
 使用：
 	
-	@RCache
-	public String getBankCard(String userId){
-	...
-	}
-	@RCache(key="#user.id")
-	public String getBankCard(User user){
-	...
-	}
-	@RCache(key="#userInfo[0]")
-	public String getBankCard(String[] userInfo){
-	...
-	}
-	@RCache(key="#userInfo['id'] + '-' + #userInfo['name']")
-	public String getBankCard(Map userInfo){
-	...
-	}
-	@LCache(key="myConfig",remove={"updateConfig","deleteConfig"},throwable=true,expiring=10,timeUnit=TimeUnit.MINUTE,prefix="PREFIX",suffix="SUFFIX")
-	public Map MyConfig(){
-	...
+	@XCache(key="#user.id",remove="globalUpdate",expiring=5,timeUnit=TimeUnit.HOUR,prefix="CLASS_SCOPE_PREFIX",suffix="CLASS_SCOPE_SUFFIX")
+	public class XService{
+		@RCache
+		public String getBankCard(String userId){
+		...
+		}
+		@RCache(key="#user.id")
+		public String getBankCard(User user){
+		...
+		}
+		@RCache(key="#userInfo[0]")
+		public String getBankCard(String[] userInfo){
+		...
+		}
+		@RCache(key="#userInfo['id'] + '-' + #userInfo['name']")
+		public String getBankCard(Map userInfo){
+		...
+		}
+		@LCache(key="myConfig",remove={"updateConfig","deleteConfig"},throwable=true,expiring=10,timeUnit=TimeUnit.MINUTE,prefix="PREFIX",suffix="SUFFIX")
+		public Map MyConfig(){
+		...
+		}
 	}
 
 ### 已接入的本地缓存：
@@ -94,7 +97,11 @@ Spring配置增加：
 </table>
 
 ### 配置详解
-@RCache和@LCache参数相同；所有的参数都不是必填项<br/>
+@RCache:启用第三方缓存<br/>
+@LCache:启用本地缓存<br/>
+@XCache:配置Class全局默认参数；无throwable选项<br/>
+*所有的参数都不是必填项<br/>
+
 <table>
 	<tr>
 		<td>参数名</td>
