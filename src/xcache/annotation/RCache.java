@@ -43,7 +43,7 @@ public @interface RCache {
 	 */
 	int expiring() default 0;
 
-	TimeUnit timeUnit() default TimeUnit.MINUTE;
+	TimeUnit timeUnit() default TimeUnit.NULL;
 
 	String prefix() default StringUtils.EMPTY;
 

@@ -23,13 +23,18 @@ public final class CacheManager {
 	private CacheManager(LocalCache<Object, Object> localCache, RemoteCache remoteCache) {
 		this.localCache = localCache;
 		this.remoteCache = remoteCache;
+		if (this.localCache == null) {
+			logger.warn("No LocalCache be found !");
+		}
+		if (this.remoteCache == null) {
+			logger.warn("No RemoteCache be found !");
+		}
 	}
 
 	private Object $dol(Cache<Object, Object> cache, Supplier<Object> spl) throws Exception {
 		if (cache != null) {
 			return spl.get();
 		}
-		logger.warn("No LocalCache be found !");
 		return null;
 	}
 
@@ -37,7 +42,6 @@ public final class CacheManager {
 		if (cache != null) {
 			return spl.get();
 		}
-		logger.warn("No RemoteCache be found !");
 		return null;
 	}
 

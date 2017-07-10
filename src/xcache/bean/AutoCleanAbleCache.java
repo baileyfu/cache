@@ -21,7 +21,7 @@ import xcache.LocalCache;
  * @description 自定义缓存,由ActionTimer实现计时
  */
 public abstract class AutoCleanAbleCache<K,V> implements LocalCache<K,V> {
-	public static final int DEFAULT_CLEAR_INTERVAL = 1;
+	private static final int DEFAULT_CLEAR_INTERVAL = 1;
 
 	/** 清理间隔(单位：分钟；最小为1分钟,默认1分钟) */
 	private int clearInterval;
@@ -32,6 +32,11 @@ public abstract class AutoCleanAbleCache<K,V> implements LocalCache<K,V> {
 	private Observable<Long> obva;
 	private Disposable emitterDis;
 
+	public AutoCleanAbleCache(){
+		this.clearInterval=DEFAULT_CLEAR_INTERVAL;
+		startEmit();
+	}
+	
 	public AutoCleanAbleCache(int clearInterval) {
 		this.clearInterval = clearInterval < 1 ? 1 : clearInterval;
 		startEmit();
@@ -83,7 +88,7 @@ public abstract class AutoCleanAbleCache<K,V> implements LocalCache<K,V> {
 
 	abstract protected void clearExpiring();
 
-	protected class Entity {
+	class Entity {
 		V element;
 		long expiring;
 		long createTime;

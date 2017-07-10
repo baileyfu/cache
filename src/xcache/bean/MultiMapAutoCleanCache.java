@@ -21,12 +21,21 @@ public class MultiMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> {
 	private Map<Integer, Map<K, Entity>> cacheMap;
 	private volatile int size;
 
+	public MultiMapAutoCleanCache() {
+		super();
+		init();
+	}
+
 	/**
 	 * @param clearInterval
 	 *            清理间隔(单位：分钟)
 	 */
 	public MultiMapAutoCleanCache(int clearInterval) {
 		super(clearInterval);
+		init();
+	}
+
+	private void init() {
 		cacheMap = new HashMap<>();
 		size = 0;
 		kenGenerator = new LimitedDumpFieldTransformer();
