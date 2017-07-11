@@ -3,7 +3,12 @@ package xcache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import commons.fun.Supplier;
+import commons.fun.NAFunction;
+import io.reactivex.Single;
+import io.reactivex.SingleEmitter;
+import io.reactivex.SingleObserver;
+import io.reactivex.SingleOnSubscribe;
+import io.reactivex.disposables.Disposable;
 import xcache.em.TimeUnit;
 
 /**
@@ -20,6 +25,8 @@ public final class CacheManager {
 	private final LocalCache<Object, Object> localCache;
 	private final RemoteCache remoteCache;
 
+	private final SingleObserver<NAFunction> cacheObserver;
+
 	private CacheManager(LocalCache<Object, Object> localCache, RemoteCache remoteCache) {
 		this.localCache = localCache;
 		this.remoteCache = remoteCache;
@@ -29,76 +36,70 @@ public final class CacheManager {
 		if (this.remoteCache == null) {
 			logger.warn("No RemoteCache be found !");
 		}
-	}
-
-	private Object $dol(Cache<Object, Object> cache, Supplier<Object> spl) throws Exception {
-		if (cache != null) {
-			return spl.get();
-		}
-		return null;
-	}
-
-	private Object $dor(Cache<Object, Object> cache, Supplier<Object> spl) throws Exception {
-		if (cache != null) {
-			return spl.get();
-		}
-		return null;
+		cacheObserver = new SingleObserver<NAFunction>() {
+			@Override
+			public void onSubscribe(Disposable d) {
+			}
+			@Override
+			public void onSuccess(NAFunction naf) {
+				try {
+					naf.apply();
+				} catch (Exception e) {
+					logger.error("XCache putting error !", e);
+				}
+			}
+			@Override
+			public void onError(Throwable e) {
+				logger.error("XCache subscribe error !", e);
+			}
+		};
 	}
 
 	public Object getLocal(Object key) throws Exception {
-		return $dol(localCache, () -> localCache.get(key));
+		return localCache == null ? null : localCache.get(key);
 	}
 
 	public Object getRemote(Object key) throws Exception {
-		return $dor(remoteCache, () -> remoteCache.get(key));
+		return remoteCache == null ? null : remoteCache.get(key);
 	}
 
 	public void putToLocal(Object key, Object value) throws Exception {
-		// TODO 以异步形式放入
-		$dol(localCache, () -> {
-			localCache.put(key, value);
-			return null;
-		});
+		if (localCache != null)
+			$async(() -> localCache.put(key, value));
 	}
 
 	public void putToLocal(Object key, Object value, int expiring, TimeUnit timeUnit) throws Exception {
-		// TODO 以异步形式放入
-		$dol(localCache, () -> {
-			localCache.put(key, value, expiring, timeUnit);
-			return null;
-		});
+		if (localCache != null)
+			$async(() -> localCache.put(key, value, expiring, timeUnit));
 	}
 
 	public void putToRemote(Object key, Object value) throws Exception {
-		// TODO 以异步形式放入
-		$dor(remoteCache, () -> {
-			remoteCache.put(key, value);
-			return null;
-		});
+		if (remoteCache != null)
+			$async(() -> remoteCache.put(key, value));
 	}
 
 	public void putToRemote(Object key, Object value, int expiring, TimeUnit timeUnit) throws Exception {
-		// TODO 以异步形式放入
-		$dor(remoteCache, () -> {
-			remoteCache.put(key, value, expiring, timeUnit);
-			return null;
-		});
+		if (remoteCache != null)
+			$async(() -> remoteCache.put(key, value, expiring, timeUnit));
 	}
 
 	public void removeLocal(Object key) throws Exception {
-		// TODO 以异步形式删除
-		$dol(localCache, () -> {
-			localCache.remove(key);
-			return null;
-		});
+		if (localCache != null)
+			$async(() -> localCache.remove(key));
 	}
 
 	public void removeRemote(Object key) throws Exception {
-		// TODO 以异步形式删除
-		$dol(remoteCache, () -> {
-			remoteCache.remove(key);
-			return null;
-		});
+		if (remoteCache != null)
+			$async(() -> remoteCache.remove(key));
+	}
+
+	private void $async(NAFunction naf) {
+		Single.create(new SingleOnSubscribe<NAFunction>() {
+			@Override
+			public void subscribe(SingleEmitter<NAFunction> e) throws Exception {
+				e.onSuccess(naf);
+			}
+		}).subscribe(cacheObserver);
 	}
 
 	private static synchronized void syncInit(LocalCache<Object, Object> localCache, RemoteCache remoteCache) {
