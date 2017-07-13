@@ -1,14 +1,15 @@
 package xcache;
 
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import commons.fun.NAFunction;
-import io.reactivex.Single;
-import io.reactivex.SingleEmitter;
-import io.reactivex.SingleObserver;
-import io.reactivex.SingleOnSubscribe;
-import io.reactivex.disposables.Disposable;
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
+import io.reactivex.FlowableEmitter;
+import io.reactivex.schedulers.Schedulers;
 import xcache.em.TimeUnit;
 
 /**
@@ -19,13 +20,14 @@ import xcache.em.TimeUnit;
  * @date 2017-06-12 16:00
  */
 public final class CacheManager {
-	private static Logger logger = LoggerFactory.getLogger(CacheManager.class);
+	public static Logger logger = LoggerFactory.getLogger(CacheManager.class);
 	private static CacheManager cacheManager = null;
 
 	private final LocalCache<Object, Object> localCache;
 	private final RemoteCache remoteCache;
 
-	private final SingleObserver<NAFunction> cacheObserver;
+	private FlowableEmitter<NAFunction> emitter;
+	private Subscription subscription;
 
 	private CacheManager(LocalCache<Object, Object> localCache, RemoteCache remoteCache) {
 		this.localCache = localCache;
@@ -36,25 +38,30 @@ public final class CacheManager {
 		if (this.remoteCache == null) {
 			logger.warn("No RemoteCache be found !");
 		}
-		cacheObserver = new SingleObserver<NAFunction>() {
-			@Override
-			public void onSubscribe(Disposable d) {
-			}
-			@Override
-			public void onSuccess(NAFunction naf) {
-				try {
-					naf.apply();
-				} catch (Exception e) {
-					logger.error("XCache putting error !", e);
-				}
-			}
-			@Override
-			public void onError(Throwable e) {
-				logger.error("XCache subscribe error !", e);
-			}
-		};
+		Flowable.<NAFunction>create((emitter) -> this.emitter = emitter, BackpressureStrategy.BUFFER)
+				.observeOn(Schedulers.io())
+				.subscribe(new Subscriber<NAFunction>() {
+					@Override
+					public void onComplete() {
+					}
+					@Override
+					public void onError(Throwable e) {
+						logger.error("XCache error !", e);
+					}
+					@Override
+					public void onNext(NAFunction naf) {
+						try {
+							naf.apply();
+						} catch (Exception e) {
+							logger.error("XCache putting error !", e);
+						}
+					}
+					@Override
+					public void onSubscribe(Subscription sub) {
+						subscription = sub;
+					}
+				});
 	}
-
 	public Object getLocal(Object key) throws Exception {
 		return localCache == null ? null : localCache.get(key);
 	}
@@ -94,12 +101,8 @@ public final class CacheManager {
 	}
 
 	private void $async(NAFunction naf) {
-		Single.create(new SingleOnSubscribe<NAFunction>() {
-			@Override
-			public void subscribe(SingleEmitter<NAFunction> e) throws Exception {
-				e.onSuccess(naf);
-			}
-		}).subscribe(cacheObserver);
+		emitter.onNext(naf);
+		subscription.request(Long.MAX_VALUE);
 	}
 
 	private static synchronized void syncInit(LocalCache<Object, Object> localCache, RemoteCache remoteCache) {
