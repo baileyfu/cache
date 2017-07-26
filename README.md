@@ -4,6 +4,7 @@
 CacheManager为主要操作类，单例实现，可单独使用，如：<br/>
 CacheManager cm=CacheManager.getInstance();<br/>
 cm.putToRemote(key,value);<br/>
+cm.removeRemote(dbIndex,key);<br/>
 ...
 ### e.g
 Spring配置增加：
@@ -16,7 +17,7 @@ Spring配置增加：
 			</constructor-arg>
 			<constructor-arg index="1">
 				<!-- RemoteCache;可为Null -->
-				<bean id="remoteCache" class="xcache.redis.RedisCache">
+				<bean id="remoteCache" class="xcache.redis.SingleRedisCache">
 						<constructor-arg>
 							<!-- 需配置org.springframework.data.redis.core.RedisTemplate -->
 							<ref bean="redisTemplate"/>
@@ -41,7 +42,7 @@ Spring配置增加：
 		public String getBankCard(String[] userInfo){
 		...
 		}
-		@RCache(key="#userInfo['id'] + '-' + #userInfo['name']")
+		@RCache(dbIndex=6,key="#userInfo['id'] + '-' + #userInfo['name']")
 		public String getBankCard(Map userInfo){
 		...
 		}
@@ -54,31 +55,31 @@ Spring配置增加：
 ### 已接入的本地缓存：
 <table>
 	<tr align="left">
-		<td>SingleMapCache</td>
+		<td>xcache.bean.SingleMapCache</td>
 		<td>单Map实现，不自动清理，线程安全</td>
 	</tr>
 	<tr align="left">
-		<td>SingleMapAutoCleanCache</td>
+		<td>xcache.bean.SingleMapAutoCleanCache</td>
 		<td>单Map实现，可自动清理过期内容，线程安全</td>
 	</tr>
 	<tr align="left">
-		<td>MultiMapCache</td>
+		<td>xcache.bean.MultiMapCache</td>
 		<td>双Map实现，不自动清理，线程安全</td>
 	</tr>
 	<tr align="left">
-		<td>MultiMapAutoCleanCache</td>
+		<td>xcache.bean.MultiMapAutoCleanCache</td>
 		<td>双Map实现，可自动清理过期内容，线程安全</td>
 	</tr>
 	<tr align="left">
-		<td>LRUCache</td>
+		<td>xcache.bean.LRUCache</td>
 		<td>单LURMap实现，不自动清理，线程安全</td>
 	</tr>
 	<tr align="left">
-		<td>MultiLRUCache</td>
+		<td>xcache.bean.MultiLRUCache</td>
 		<td>双LURMap实现，不自动清理，线程安全</td>
 	</tr>
 	<tr align="left">
-		<td>EHCache</td>
+		<td>xcache.bean.EHCache</td>
 		<td>基于Ehcache实现的Cache</td>
 	</tr>
 </table>
@@ -87,11 +88,15 @@ Spring配置增加：
 ### 已接入的第三方缓存
 <table>
 	<tr>
-		<td>RedisCache</td>
+		<td>xcache.redis.SingleRedisCache</td>
 		<td>基于Spring的RedisTemplate实现</td>
 	</tr>
 	<tr>
-		<td>RedisClusterCache(待实现)</td>
+		<td>xcache.redis.SingleRedisShardCache</td>
+		<td>基于Spring的RedisTemplate实现;可指定数据库ID</td>
+	</tr>
+	<tr>
+		<td>xcache.redis.RedisClusterCache(未实现)</td>
 		<td>基于Redis集群实现</td>
 	</tr>
 </table>
@@ -119,6 +124,12 @@ Spring配置增加：
 			2.SpEL；表达式引用参数名称正确则解析，否则将表达式以字符串形式作为key；若多个参数名称相同，则取第一个参数参与表达式运算<br/>
 			3.字符串形式，直接作为key<br/>
 		</td>
+	</tr>
+	<tr>
+		<td>dbIndex</td>
+		<td>Integer</td>
+		<td>0</td>
+		<td>数据库ID;目前仅Redis使用</td>
 	</tr>
 	<tr>
 		<td>remove</td>
