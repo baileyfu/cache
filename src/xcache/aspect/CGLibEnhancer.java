@@ -26,15 +26,12 @@ import xcache.CacheManager;
  * @date 2017-06-20 13:59
  */
 public class CGLibEnhancer extends EnhancingResolver {
-	private MethodInterceptor getMethod;
-	private MethodInterceptor removeMethod;
-	private CallbackFilter callbackFilter;
 	private Enhancer enhancer;
 
 	public CGLibEnhancer(Object original) {
 		super(original);
 		ParameterNameDiscoverer pnd = new LocalVariableTableParameterNameDiscoverer();
-		getMethod = new MethodInterceptor() {
+		MethodInterceptor getMethod = new MethodInterceptor() {
 			@Override
 			public Object intercept(Object target, Method method, Object[] params, MethodProxy proxy) throws Throwable {
 				return excuteGet(method, (annoBean) -> renderKey(annoBean, pnd.getParameterNames(method), params), () -> {
@@ -46,7 +43,7 @@ public class CGLibEnhancer extends EnhancingResolver {
 				});
 			}
 		};
-		removeMethod = new MethodInterceptor() {
+		MethodInterceptor removeMethod = new MethodInterceptor() {
 			@Override
 			public Object intercept(Object target, Method method, Object[] params, MethodProxy proxy) throws Throwable {
 				return excuteRemove(method, (annoBean) -> renderKey(annoBean, pnd.getParameterNames(method), params), () -> {
@@ -58,42 +55,45 @@ public class CGLibEnhancer extends EnhancingResolver {
 				});
 			}
 		};
-		callbackFilter = new CallbackFilter() {
+		enhancer = new Enhancer();
+		enhancer.setSuperclass(original.getClass());
+		enhancer.setCallbacks(new Callback[] { getMethod, removeMethod, NoOp.INSTANCE });
+		enhancer.setCallbackFilter(new CallbackFilter() {
 			@Override
 			public int accept(Method method) {
 				return isGetCache(method.toGenericString()) ? 0 : isRemoveCache(method.getName()) ? 1 : 2;
 			}
-		};
-		enhancer = new Enhancer();
-		enhancer.setSuperclass(original.getClass());
-		enhancer.setCallbacks(new Callback[] { getMethod, removeMethod, NoOp.INSTANCE });
-		enhancer.setCallbackFilter(callbackFilter);
+		});
 	}
 
 	private Object excuteGet(Method method, Function<AnnoBean, Object> renderKey, Supplier<Object> original) throws Exception {
+		CacheManager cacheManager = CacheManager.getInstance();
+		// CacheManager未初始化则不执行缓存逻辑
+		if (cacheManager == null) {
+			return original.get();
+		}
 		AnnoBean annoBean = annoInfo4get(method.toGenericString());
 		Object key = renderKey.apply(annoBean);
 		/** 若方法无参数，或无法匹配key则无法缓存 */
 		if (key == null) {
 			return original.get();
 		}
-		CacheManager cacheManager = CacheManager.getInstance();
-		Object result = $doc(annoBean, () -> cacheManager.getRemote(key), () -> cacheManager.getLocal(key));
+		Object result = $doc(annoBean, () -> cacheManager.getRemote(annoBean.dbIndex, key), () -> cacheManager.getLocal(annoBean.dbIndex, key));
 		if (result == null) {
 			result = original.get();
 			Object value = result;
 			$doc(annoBean, () -> {
 				if (annoBean.expiring < 1) {
-					cacheManager.putToRemote(key, value);
+					cacheManager.putToRemote(annoBean.dbIndex, key, value);
 				} else {
-					cacheManager.putToRemote(key, value, annoBean.expiring, annoBean.timeUnit);
+					cacheManager.putToRemote(annoBean.dbIndex, key, value, annoBean.expiring, annoBean.timeUnit);
 				}
 				return null;
 			}, () -> {
 				if (annoBean.expiring < 1) {
-					cacheManager.putToLocal(key, value);
+					cacheManager.putToLocal(annoBean.dbIndex, key, value);
 				} else {
-					cacheManager.putToLocal(key, value, annoBean.expiring, annoBean.timeUnit);
+					cacheManager.putToLocal(annoBean.dbIndex, key, value, annoBean.expiring, annoBean.timeUnit);
 				}
 				return null;
 			});
@@ -103,21 +103,24 @@ public class CGLibEnhancer extends EnhancingResolver {
 
 	private Object excuteRemove(Method method, Function<AnnoBean, Object> renderKey, Supplier<Object> original) throws Exception {
 		Object result = original.get();
-		List<AnnoBean> annoBeanList = annoInfo4remove(method.getName());
-		for (AnnoBean annoBean:annoBeanList) {
-			Object key=renderKey.apply(annoBean);
-			/** 若方法无参数，则无需清除缓存 */
-			if (key == null) {
-				continue;
+		CacheManager cacheManager = CacheManager.getInstance();
+		// CacheManager未初始化则不执行缓存逻辑
+		if (cacheManager != null) {
+			List<AnnoBean> annoBeanList = annoInfo4remove(method.getName());
+			for (AnnoBean annoBean : annoBeanList) {
+				Object key = renderKey.apply(annoBean);
+				/** 若方法无参数，则无需清除缓存 */
+				if (key == null) {
+					continue;
+				}
+				$doc(annoBean, () -> {
+					cacheManager.removeRemote(annoBean.dbIndex, key);
+					return null;
+				}, () -> {
+					cacheManager.removeLocal(annoBean.dbIndex, key);
+					return null;
+				});
 			}
-			CacheManager cacheManager = CacheManager.getInstance();
-			$doc(annoBean, () -> {
-				cacheManager.removeRemote(key);
-				return null;
-			}, () -> {
-				cacheManager.removeLocal(key);
-				return null;
-			});
 		}
 		return result;
 	}

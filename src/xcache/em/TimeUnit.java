@@ -1,5 +1,6 @@
 package xcache.em;
 
+
 public enum TimeUnit {
 	NULL,SECOND, MINUTE, HOUR, DAY;
 	public int toSeconds(long value) {
@@ -26,5 +27,13 @@ public enum TimeUnit {
 			return value * 24 * 60 * 60 * 1000;
 		}
 		return 0;
+	}
+	
+	public java.util.concurrent.TimeUnit toConcurrent() {
+		return this == DAY ? java.util.concurrent.TimeUnit.DAYS
+				: this == HOUR ? java.util.concurrent.TimeUnit.HOURS
+						: this == MINUTE ? java.util.concurrent.TimeUnit.MINUTES 
+								: this == SECOND ? java.util.concurrent.TimeUnit.SECONDS 
+										: null;
 	}
 }

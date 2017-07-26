@@ -12,6 +12,8 @@ import xcache.em.TimeUnit;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface XCache {
+	int dbIndex() default 0;
+
 	String key() default StringUtils.EMPTY;
 
 	String[] remove() default StringUtils.EMPTY;

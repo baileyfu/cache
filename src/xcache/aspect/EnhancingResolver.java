@@ -32,15 +32,19 @@ public abstract class EnhancingResolver implements CacheEnhancer {
 
 	public EnhancingResolver(Object target) {
 		Class<?> clazz = target.getClass();
-		AnnoBean kpAnnoBean=null;
-		XCache kpCache=clazz.getDeclaredAnnotation(XCache.class);
+		AnnoBean kpAnnoBean = null;
+		XCache kpCache = clazz.getDeclaredAnnotation(XCache.class);
 		if (kpCache != null) {
 			kpAnnoBean = AnnoBean.toAnnoBean(kpCache, null);
 		}
 		for (Method m : clazz.getDeclaredMethods()) {
+			// 无返回值的方法不缓存
+			if (m.getReturnType() == Void.TYPE)
+				continue;
+
 			RCache rCache = m.getDeclaredAnnotation(RCache.class);
 			if (rCache != null) {
-				AnnoBean ab = AnnoBean.toAnnoBean(rCache,kpAnnoBean);
+				AnnoBean ab = AnnoBean.toAnnoBean(rCache, kpAnnoBean);
 				/** 以方法的详细描述为key，匹配唯一方法 */
 				gmMap.put(m.toGenericString(), ab);
 				saveRemoveMethods(ab);
@@ -49,7 +53,7 @@ public abstract class EnhancingResolver implements CacheEnhancer {
 			}
 			LCache lCache = m.getDeclaredAnnotation(LCache.class);
 			if (lCache != null) {
-				AnnoBean ab = AnnoBean.toAnnoBean(lCache,kpAnnoBean);
+				AnnoBean ab = AnnoBean.toAnnoBean(lCache, kpAnnoBean);
 				gmMap.put(m.toGenericString(), ab);
 				saveRemoveMethods(ab);
 			}
@@ -59,7 +63,7 @@ public abstract class EnhancingResolver implements CacheEnhancer {
 	private void saveRemoveMethods(AnnoBean ab) {
 		if (ab.remove != null && ab.remove.length > 0) {
 			for (String methodName : ab.remove) {
-				if(StringUtils.isNotBlank(methodName)){
+				if (StringUtils.isNotBlank(methodName)) {
 					/** 一个remove方法可匹配多个缓存方法 */
 					List<AnnoBean> abColl = rmMap.get(methodName);
 					if (abColl == null) {
@@ -122,18 +126,13 @@ public abstract class EnhancingResolver implements CacheEnhancer {
 				}
 				try {
 					key = hasMatched ? parser.parseExpression(annoBean.key).getValue(context, Object.class) : null;
-				} catch (Exception e) {}
+				} catch (Exception e) {
+				}
 			}
 			key = key == null ? annoBean.key : key;
 		}
-		return key == null
-				? null
-				: new StringBuilder()
-						.append(annoBean.prefix)
-						.append(StringUtils.isNotBlank(annoBean.prefix) ? KEY_SIGN : StringUtils.EMPTY)
-						.append(key)
-						.append(StringUtils.isNotBlank(annoBean.suffix) ? KEY_SIGN : StringUtils.EMPTY)
-						.append(annoBean.suffix)
-						.toString();
+		return key == null ? null
+				: new StringBuilder().append(annoBean.prefix).append(StringUtils.isNotBlank(annoBean.prefix) ? KEY_SIGN : StringUtils.EMPTY).append(key)
+						.append(StringUtils.isNotBlank(annoBean.suffix) ? KEY_SIGN : StringUtils.EMPTY).append(annoBean.suffix).toString();
 	}
 }
