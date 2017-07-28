@@ -12,7 +12,7 @@ import xcache.em.TimeUnit;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface XCache {
-	int dbIndex() default 0;
+	String shardName() default StringUtils.EMPTY;
 
 	String key() default StringUtils.EMPTY;
 

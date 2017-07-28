@@ -13,11 +13,11 @@ import xcache.em.TimeUnit;
 @Target(ElementType.METHOD)
 public @interface RCache {
 	/**
-	 * 数据库下标;目前仅Redis使用
+	 * 数据分库名;由具体实现类解析到对应的数据库下标格式
 	 * 
 	 * @return
 	 */
-	int dbIndex() default 0;
+	String shardName() default StringUtils.EMPTY;
 	/**
 	 * 缓存的key；可为空，或字符串，或SpEL表达式
 	 * 

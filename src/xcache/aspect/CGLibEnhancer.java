@@ -78,22 +78,22 @@ public class CGLibEnhancer extends EnhancingResolver {
 		if (key == null) {
 			return original.get();
 		}
-		Object result = $doc(annoBean, () -> cacheManager.getRemote(annoBean.dbIndex, key), () -> cacheManager.getLocal(annoBean.dbIndex, key));
+		Object result = $doc(annoBean, () -> cacheManager.getRemote(annoBean.shardName, key), () -> cacheManager.getLocal(annoBean.shardName, key));
 		if (result == null) {
 			result = original.get();
 			Object value = result;
 			$doc(annoBean, () -> {
 				if (annoBean.expiring < 1) {
-					cacheManager.putToRemote(annoBean.dbIndex, key, value);
+					cacheManager.putToRemote(annoBean.shardName, key, value);
 				} else {
-					cacheManager.putToRemote(annoBean.dbIndex, key, value, annoBean.expiring, annoBean.timeUnit);
+					cacheManager.putToRemote(annoBean.shardName, key, value, annoBean.expiring, annoBean.timeUnit);
 				}
 				return null;
 			}, () -> {
 				if (annoBean.expiring < 1) {
-					cacheManager.putToLocal(annoBean.dbIndex, key, value);
+					cacheManager.putToLocal(annoBean.shardName, key, value);
 				} else {
-					cacheManager.putToLocal(annoBean.dbIndex, key, value, annoBean.expiring, annoBean.timeUnit);
+					cacheManager.putToLocal(annoBean.shardName, key, value, annoBean.expiring, annoBean.timeUnit);
 				}
 				return null;
 			});
@@ -114,10 +114,10 @@ public class CGLibEnhancer extends EnhancingResolver {
 					continue;
 				}
 				$doc(annoBean, () -> {
-					cacheManager.removeRemote(annoBean.dbIndex, key);
+					cacheManager.removeRemote(annoBean.shardName, key);
 					return null;
 				}, () -> {
-					cacheManager.removeLocal(annoBean.dbIndex, key);
+					cacheManager.removeLocal(annoBean.shardName, key);
 					return null;
 				});
 			}

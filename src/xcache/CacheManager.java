@@ -70,81 +70,81 @@ public final class CacheManager {
 	public Object getLocal(Object key) throws Exception {
 		return localCache == null ? null : localCache.get(key);
 	}
-	public Object getLocal(int dbIndex, Object key) throws Exception {
-		return localShardCache == null ? getLocal(key) : localShardCache.get(dbIndex, key);
+	public Object getLocal(String shardName, Object key) throws Exception {
+		return localShardCache == null ? getLocal(key) : localShardCache.get(shardName, key);
 	}
 
 	public Object getRemote(Object key) throws Exception {
 		return remoteCache == null ? null : remoteCache.get(key);
 	}
-	public Object getRemote(int dbIndex, Object key) throws Exception {
-		return remoteShardCache == null ? getRemote(key) : remoteShardCache.get(dbIndex, key);
+	public Object getRemote(String shardName, Object key) throws Exception {
+		return remoteShardCache == null ? getRemote(key) : remoteShardCache.get(shardName, key);
 	}
 
 	public void putToLocal(Object key, Object value) throws Exception {
 		if (localCache != null)
 			$async(() -> localCache.put(key, value));
 	}
-	public void putToLocal(int dbIndex, Object key, Object value) throws Exception {
+	public void putToLocal(String shardName, Object key, Object value) throws Exception {
 		if (localShardCache == null)
 			putToLocal(key, value);
 		else
-			$async(() -> localShardCache.put(dbIndex, key, value));
+			$async(() -> localShardCache.put(shardName, key, value));
 	}
 	
 	public void putToLocal(Object key, Object value, int expiring, TimeUnit timeUnit) throws Exception {
 		if (localCache != null)
 			$async(() -> localCache.put(key, value, expiring, timeUnit));
 	}
-	public void putToLocal(int dbIndex,Object key, Object value, int expiring, TimeUnit timeUnit) throws Exception {
+	public void putToLocal(String shardName,Object key, Object value, int expiring, TimeUnit timeUnit) throws Exception {
 		if (localShardCache == null)
 			putToLocal(key, value, expiring, timeUnit);
 		else
-			$async(() -> localShardCache.put(dbIndex, key, value, expiring, timeUnit));
+			$async(() -> localShardCache.put(shardName, key, value, expiring, timeUnit));
 	}
 
 	public void putToRemote(Object key, Object value) throws Exception {
 		if (remoteCache != null)
 			$async(() -> remoteCache.put(key, value));
 	}
-	public void putToRemote(int dbIndex,Object key, Object value) throws Exception {
+	public void putToRemote(String shardName,Object key, Object value) throws Exception {
 		if(remoteShardCache==null)
 			putToRemote(key, value);
 		else
-			$async(() -> remoteShardCache.put(dbIndex, key, value));
+			$async(() -> remoteShardCache.put(shardName, key, value));
 	}
 
 	public void putToRemote(Object key, Object value, int expiring, TimeUnit timeUnit) throws Exception {
 		if (remoteCache != null)
 			$async(() -> remoteCache.put(key, value, expiring, timeUnit));
 	}
-	public void putToRemote(int dbIndex, Object key, Object value, int expiring, TimeUnit timeUnit) throws Exception {
+	public void putToRemote(String shardName, Object key, Object value, int expiring, TimeUnit timeUnit) throws Exception {
 		if (remoteShardCache == null)
 			putToRemote(key, value, expiring, timeUnit);
 		else
-			$async(() -> remoteShardCache.put(dbIndex, key, value, expiring, timeUnit));
+			$async(() -> remoteShardCache.put(shardName, key, value, expiring, timeUnit));
 	}
 
 	public void removeLocal(Object key) throws Exception {
 		if (localCache != null)
 			$async(() -> localCache.remove(key));
 	}
-	public void removeLocal(int dbIndex, Object key) throws Exception {
+	public void removeLocal(String shardName, Object key) throws Exception {
 		if (localShardCache == null)
 			removeLocal(key);
 		else
-			$async(() -> localShardCache.remove(dbIndex, key));
+			$async(() -> localShardCache.remove(shardName, key));
 	}
 
 	public void removeRemote(Object key) throws Exception {
 		if (remoteCache != null)
 			$async(() -> remoteCache.remove(key));
 	}
-	public void removeRemote(int dbIndex, Object key) throws Exception {
+	public void removeRemote(String shardName, Object key) throws Exception {
 		if (remoteShardCache == null)
 			removeRemote(key);
 		else
-			$async(() -> remoteShardCache.remove(dbIndex, key));
+			$async(() -> remoteShardCache.remove(shardName, key));
 	}
 
 	private void $async(NAFunction naf) {

@@ -13,23 +13,23 @@ import xcache.em.TimeUnit;
  */
 public interface ShardCache<K, V> {
 	/** 加入缓存 */
-	public void put(int dbIndex, K key, V value) throws Exception;
+	public void put(String shardName, K key, V value) throws Exception;
 
 	/** 加入缓存，并设定过期时间 */
-	public void put(int dbIndex, K key, V value, long expiring, TimeUnit timeUnit) throws Exception;
+	public void put(String shardName, K key, V value, long expiring, TimeUnit timeUnit) throws Exception;
 
 	/** 从缓存删除 */
-	public void remove(int dbIndex, K key) throws Exception;
+	public void remove(String shardName, K key) throws Exception;
 
 	/** 从缓存读取 */
-	public V get(int dbIndex, K key) throws Exception;
+	public V get(String shardName, K key) throws Exception;
 
 	/** 是否存在 */
-	public boolean exists(int dbIndex, K key);
+	public boolean exists(String shardName, K key);
 
 	/** 缓存大小 */
-	public int size(int dbIndex);
+	public int size(String shardName);
 
 	/** 清空缓存 */
-	public void clear(int dbIndex) throws Exception;
+	public void clear(String shardName) throws Exception;
 }

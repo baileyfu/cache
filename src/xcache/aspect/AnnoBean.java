@@ -14,7 +14,7 @@ import xcache.em.TimeUnit;
 
 public class AnnoBean implements Cloneable{
 	CacheType cacheType;
-	int dbIndex;
+	String shardName;
 	String key;
 	String[] remove;
 	boolean throwable;
@@ -41,7 +41,7 @@ public class AnnoBean implements Cloneable{
 		if (cacheAnno instanceof XCache) {
 			XCache xCache = (XCache) cacheAnno;
 			ab = new AnnoBean();
-			ab.dbIndex = xCache.dbIndex();
+			ab.shardName = xCache.shardName();
 			ab.key = xCache.key();
 			ab.remove = xCache.remove();
 			ab.expiring = xCache.expiring();
@@ -51,7 +51,7 @@ public class AnnoBean implements Cloneable{
 		} else if (cacheAnno instanceof RCache) {
 			RCache rCache = (RCache) cacheAnno;
 			ab.cacheType = CacheType.REMOTE;
-			ab.dbIndex=rCache.dbIndex();
+			ab.shardName=rCache.shardName();
 			ab.key = StringUtils.isNotBlank(rCache.key()) ? rCache.key() : ab.key;
 			ab.remove = unique(ab.remove, rCache.remove());
 			ab.throwable = rCache.throwable();
@@ -62,7 +62,7 @@ public class AnnoBean implements Cloneable{
 		} else if (cacheAnno instanceof LCache) {
 			LCache lCache = (LCache) cacheAnno;
 			ab.cacheType = CacheType.LOCAL;
-			ab.dbIndex = lCache.dbIndex();
+			ab.shardName = lCache.shardName();
 			ab.key = StringUtils.isNotBlank(lCache.key()) ? lCache.key() : ab.key;
 			ab.remove = unique(ab.remove, lCache.remove());
 			ab.throwable = lCache.throwable();
@@ -96,7 +96,7 @@ public class AnnoBean implements Cloneable{
 
 	@Override
 	public String toString() {
-		return "AnnoBean [cacheType=" + cacheType + ", dbIndex=" + dbIndex + ", key=" + key + ", remove=" + Arrays.toString(remove) + ", throwable=" + throwable
+		return "AnnoBean [cacheType=" + cacheType + ", shardName=" + shardName + ", key=" + key + ", remove=" + Arrays.toString(remove) + ", throwable=" + throwable
 				+ ", expiring=" + expiring + ", timeUnit=" + timeUnit + ", prefix=" + prefix + ", suffix=" + suffix + "]";
 	}
 	

@@ -10,6 +10,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.TimeoutUtils;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
+import xcache.Shard;
 import xcache.ShardCache;
 import xcache.em.TimeUnit;
 
@@ -21,19 +22,24 @@ import xcache.em.TimeUnit;
  * @date 2017-07-20 13:41
  */
 public class SingleRedisShardCache extends SingleRedisCache implements ShardCache<Object, Object> {
-
+	private Shard shard;
 	public SingleRedisShardCache(RedisTemplate<Object, Object> redisTemplate) {
 		super(redisTemplate);
+		shard=new RedisShard();
 	}
 
 	@Override
-	public void put(int dbIndex, Object key, Object value) throws Exception {
-		put(dbIndex, key, value, -1, null);
+	public void put(String shardName, Object key, Object value) throws Exception {
+		put(shardName, key, value, -1, null);
 	}
 
 	@Override
-	public void put(int dbIndex, Object key, Object value, long expiring, TimeUnit timeUnit) throws Exception {
-		checkIndex(dbIndex);
+	public void put(String shardName, Object key, Object value, long expiring, TimeUnit timeUnit) throws Exception {
+		int dbIndex=shard.convertToIndex(shardName);
+		if(dbIndex==-1){
+			super.put(key, value, expiring, timeUnit);
+			return;
+		}
 		redisTemplate.execute(new RedisCallback<Object>() {
 			@SuppressWarnings("unchecked")
 			@Override
@@ -50,8 +56,12 @@ public class SingleRedisShardCache extends SingleRedisCache implements ShardCach
 	}
 
 	@Override
-	public void remove(int dbIndex, Object key) throws Exception {
-		checkIndex(dbIndex);
+	public void remove(String shardName, Object key) throws Exception {
+		int dbIndex=shard.convertToIndex(shardName);
+		if(dbIndex==-1){
+			super.remove(key);
+			return;
+		}
 		redisTemplate.execute(new RedisCallback<Long>() {
 			@SuppressWarnings("unchecked")
 			@Override
@@ -63,8 +73,11 @@ public class SingleRedisShardCache extends SingleRedisCache implements ShardCach
 	}
 
 	@Override
-	public Object get(int dbIndex, Object key) throws Exception {
-		checkIndex(dbIndex);
+	public Object get(String shardName, Object key) throws Exception {
+		int dbIndex=shard.convertToIndex(shardName);
+		if(dbIndex==-1){
+			return super.get(key);
+		}
 		return redisTemplate.execute(new RedisCallback<Object>() {
 			@SuppressWarnings("unchecked")
 			@Override
@@ -77,8 +90,11 @@ public class SingleRedisShardCache extends SingleRedisCache implements ShardCach
 	}
 
 	@Override
-	public boolean exists(int dbIndex, Object key) {
-		checkIndex(dbIndex);
+	public boolean exists(String shardName, Object key) {
+		int dbIndex=shard.convertToIndex(shardName);
+		if(dbIndex==-1){
+			return super.exists(key);
+		}
 		return redisTemplate.execute(new RedisCallback<Boolean>() {
 			@SuppressWarnings("unchecked")
 			@Override
@@ -90,8 +106,11 @@ public class SingleRedisShardCache extends SingleRedisCache implements ShardCach
 	}
 
 	@Override
-	public int size(int dbIndex) {
-		checkIndex(dbIndex);
+	public int size(String shardName) {
+		int dbIndex=shard.convertToIndex(shardName);
+		if(dbIndex==-1){
+			return super.size();
+		}
 		return redisTemplate.execute(new RedisCallback<Long>() {
 			@Override
 			public Long doInRedis(RedisConnection connection) throws DataAccessException {
@@ -102,8 +121,12 @@ public class SingleRedisShardCache extends SingleRedisCache implements ShardCach
 	}
 
 	@Override
-	public void clear(int dbIndex) throws Exception {
-		checkIndex(dbIndex);
+	public void clear(String shardName) throws Exception {
+		int dbIndex=shard.convertToIndex(shardName);
+		if (dbIndex == -1) {
+			super.clear();
+			return;
+		}
 		redisTemplate.execute(new RedisCallback<Long>() {
 			@SuppressWarnings("unchecked")
 			@Override
@@ -117,9 +140,4 @@ public class SingleRedisShardCache extends SingleRedisCache implements ShardCach
 
 	private BiFunction<RedisSerializer<Object>, Object, byte[]> serialize = (s, t) -> (t instanceof byte[]) ? (byte[]) t : s.serialize(t);
 
-	private void checkIndex(int dbIndex) {
-		if (dbIndex < 0 || dbIndex > 15) {
-			throw new java.lang.IllegalArgumentException("Illegal dbIndex for Redis.It should between 0 to 15");
-		}
-	}
 }
