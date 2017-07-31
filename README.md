@@ -4,7 +4,7 @@
 CacheManager为主要操作类，单例实现，可单独使用，如：<br/>
 CacheManager cm=CacheManager.getInstance();<br/>
 cm.putToRemote(key,value);<br/>
-cm.removeRemote(dbIndex,key);<br/>
+cm.removeRemote(shardName,key);<br/>
 ...
 ### e.g
 Spring配置增加：
@@ -42,7 +42,7 @@ Spring配置增加：
 		public String getBankCard(String[] userInfo){
 		...
 		}
-		@RCache(dbIndex=6,key="#userInfo['id'] + '-' + #userInfo['name']")
+		@RCache(shardName="6",key="#userInfo['id'] + '-' + #userInfo['name']")
 		public String getBankCard(Map userInfo){
 		...
 		}
@@ -126,10 +126,10 @@ Spring配置增加：
 		</td>
 	</tr>
 	<tr>
-		<td>dbIndex</td>
-		<td>Integer</td>
-		<td>0</td>
-		<td>数据库ID;目前仅Redis使用</td>
+		<td>shardName</td>
+		<td>String</td>
+		<td>空</td>
+		<td>数据库分库名;目前仅Redis使用，用于指定数据库下标</td>
 	</tr>
 	<tr>
 		<td>remove</td>
