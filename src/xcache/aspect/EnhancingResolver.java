@@ -30,8 +30,7 @@ public abstract class EnhancingResolver implements CacheEnhancer {
 	private Map<String, AnnoBean> gmMap = new HashMap<>();
 	private Map<String, List<AnnoBean>> rmMap = new HashMap<>();
 
-	public EnhancingResolver(Object target) {
-		Class<?> clazz = target.getClass();
+	public EnhancingResolver(Class<?> clazz) {
 		AnnoBean kpAnnoBean = null;
 		XCache kpCache = clazz.getDeclaredAnnotation(XCache.class);
 		if (kpCache != null) {

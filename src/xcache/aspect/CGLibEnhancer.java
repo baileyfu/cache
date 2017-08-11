@@ -29,14 +29,14 @@ public class CGLibEnhancer extends EnhancingResolver {
 	private Enhancer enhancer;
 
 	public CGLibEnhancer(Object original) {
-		super(original);
+		super(original.getClass());
 		ParameterNameDiscoverer pnd = new LocalVariableTableParameterNameDiscoverer();
 		MethodInterceptor getMethod = new MethodInterceptor() {
 			@Override
 			public Object intercept(Object target, Method method, Object[] params, MethodProxy proxy) throws Throwable {
 				return excuteGet(method, (annoBean) -> renderKey(annoBean, pnd.getParameterNames(method), params), () -> {
 					try {
-						return proxy.invokeSuper(target, params);
+						return proxy.invoke(original, params);
 					} catch (Throwable e) {
 						throw new Exception(e);
 					}
@@ -48,7 +48,7 @@ public class CGLibEnhancer extends EnhancingResolver {
 			public Object intercept(Object target, Method method, Object[] params, MethodProxy proxy) throws Throwable {
 				return excuteRemove(method, (annoBean) -> renderKey(annoBean, pnd.getParameterNames(method), params), () -> {
 					try {
-						return proxy.invokeSuper(target, params);
+						return proxy.invoke(original, params);
 					} catch (Throwable e) {
 						throw new Exception(e);
 					}
@@ -147,12 +147,16 @@ public class CGLibEnhancer extends EnhancingResolver {
 
 	private static Map<String, CGLibEnhancer> instanceMap = new HashMap<>();
 
-	public static CGLibEnhancer create(Object original) {
+	@Deprecated
+	public static CGLibEnhancer createInstance(Object original) {
 		CGLibEnhancer instance = instanceMap.get(original.getClass().getTypeName());
 		if (instance == null) {
 			instance = new CGLibEnhancer(original);
 			instanceMap.put(original.getClass().getTypeName(), instance);
 		}
 		return instance;
+	}
+	public static CGLibEnhancer create(Object original) {
+		return new CGLibEnhancer(original);
 	}
 }
