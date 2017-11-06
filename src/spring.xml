@@ -19,7 +19,7 @@
 			<ref bean="redisTemplate"/>
 		</constructor-arg>
 	</bean>
-	<bean class="xcache.spring.CacheConfiguration">
+	<bean class="xcache.core.CacheConfiguration">
 		<constructor-arg index="0">
 			<bean class="xcache.bean.SingleMapCache"/>
 		</constructor-arg>
@@ -28,6 +28,6 @@
 		</constructor-arg>
 	</bean>
 	
-	<bean class="xcache.spring.CacheBeanPostProcessor"/>
+	<bean class="xcache.core.CacheBeanPostProcessor"/>
 	
 </beans>

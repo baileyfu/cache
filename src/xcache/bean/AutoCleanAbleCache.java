@@ -2,16 +2,14 @@ package xcache.bean;
 
 import java.util.concurrent.TimeUnit;
 
-import org.slf4j.Logger;
-
 import commons.variable.ActionTimer;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
-import xcache.CacheManager;
 import xcache.LocalCache;
+import xcache.XcacheLoggerHolder;
 
 /**
  * 可自动清理过期对象的本地缓存
@@ -22,8 +20,7 @@ import xcache.LocalCache;
  * @version 2.1
  * @description 自定义缓存,由ActionTimer实现计时
  */
-public abstract class AutoCleanAbleCache<K,V> implements LocalCache<K,V> {
-	public static Logger logger = CacheManager.logger;
+public abstract class AutoCleanAbleCache<K,V> implements XcacheLoggerHolder,LocalCache<K,V> {
 	private static final int DEFAULT_CLEAR_INTERVAL = 1;
 
 	/** 清理间隔(单位：分钟；最小为1分钟,默认1分钟) */
@@ -54,7 +51,7 @@ public abstract class AutoCleanAbleCache<K,V> implements LocalCache<K,V> {
 			setEmitterDis(d);
 		});
 		this.obva.subscribeOn(Schedulers.newThread()).observeOn(Schedulers.io()).subscribe(this::clear, (e) -> {
-			logger.error("AutoCleanAbleCache emit error", e);
+			LOGGER.error("AutoCleanAbleCache emit error", e);
 			stopEmit();
 		}, () -> {
 			stopEmit();

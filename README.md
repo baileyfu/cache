@@ -1,16 +1,42 @@
-# 缓存框架
+# 缓存框架V1.0.2
 对缓冲层的抽象，简化缓存使用；可接入本地缓存和第三方缓存<br/>
 未指定localCache和remoteCache或者需缓存返回对象的方法的参数为空，则不做任何操作<br/>
 CacheManager为主要操作类，单例实现，可单独使用，如：<br/>
 CacheManager cm=CacheManager.getInstance();<br/>
 cm.putToRemote(key,value);<br/>
 cm.removeRemote(shardName,key);<br/>
-...
+
+###版本变更记录
+<table>
+	<tr align='center'>
+		<th>版本</th>
+		<th>日期</th>
+		<th>描述</th>
+	</tr>
+	<tr align='center'>
+		<td>V1.0.0</td>
+		<td>2017-06-06</td>
+		<td align="left">完成预期功能,可投入使用</td>
+	</tr>
+	<tr align='center'>
+		<td>V1.0.1</td>
+		<td>2017-08-01</td>
+		<td align="left">支持分片</td>
+	</tr>
+	<tr align='center'>
+		<td>V1.0.1</td>
+		<td>2017-11-06</td>
+		<td align="left">包结构重置;LOGGER分离</td>
+	</tr>
+</table>
+
+---
+
 ### e.g
 Spring配置增加：
 
-	<bean class="xcache.spring.CacheBeanPostProcessor"/>
-	<bean class="xcache.spring.CacheConfiguration">
+	<bean class="xcache.core.CacheBeanPostProcessor"/>
+	<bean class="xcache.core.CacheConfiguration">
 			<constructor-arg index="0">
 				<!-- LocalCache;可为Null -->
 				<bean class="xcache.bean.SingleMapCache"/>

@@ -16,7 +16,7 @@ import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 import net.sf.cglib.proxy.NoOp;
-import xcache.CacheManager;
+import xcache.core.CacheManager;
 
 /**
  * 基于CGLib增强
