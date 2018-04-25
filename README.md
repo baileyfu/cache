@@ -24,9 +24,14 @@ cm.removeRemote(shardName,key);<br/>
 		<td align="left">支持分片</td>
 	</tr>
 	<tr align='center'>
-		<td>V1.0.1</td>
+		<td>V1.0.2</td>
 		<td>2017-11-06</td>
 		<td align="left">包结构重置;LOGGER分离</td>
+	</tr>
+	<tr align='center'>
+		<td>V1.0.3</td>
+		<td>2018-04-25</td>
+		<td align="left">新增自定义Schema</td>
 	</tr>
 </table>
 
