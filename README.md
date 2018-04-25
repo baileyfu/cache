@@ -1,4 +1,4 @@
-# 缓存框架V1.0.2
+# 缓存框架V1.0.3
 对缓冲层的抽象，简化缓存使用；可接入本地缓存和第三方缓存<br/>
 未指定localCache和remoteCache或者需缓存返回对象的方法的参数为空，则不做任何操作<br/>
 CacheManager为主要操作类，单例实现，可单独使用，如：<br/>
@@ -40,22 +40,19 @@ cm.removeRemote(shardName,key);<br/>
 ### e.g
 Spring配置增加：
 
-	<bean class="xcache.core.CacheBeanPostProcessor"/>
-	<bean class="xcache.core.CacheConfiguration">
-			<constructor-arg index="0">
-				<!-- LocalCache;可为Null -->
-				<bean class="xcache.bean.SingleMapCache"/>
-			</constructor-arg>
-			<constructor-arg index="1">
-				<!-- RemoteCache;可为Null -->
-				<bean id="remoteCache" class="xcache.redis.SingleRedisCache">
-						<constructor-arg>
-							<!-- 需配置org.springframework.data.redis.core.RedisTemplate -->
-							<ref bean="redisTemplate"/>
-						</constructor-arg>
-				</bean>
+	...
+	xmlns:xcache="http://www.xteam.org/xcache"
+	xsi:schemaLocation="http://www.xteam.org/xcache http://www.xteam.org/xcache/xcache-1.0.xsd"
+	...
+	<bean id="localCache" class="xcache.bean.SingleMapCache"/>
+	<bean id="remoteCache" class="xcache.redis.SingleRedisCache">
+			<constructor-arg>
+				<!-- 需配置org.springframework.data.redis.core.RedisTemplate -->
+				<ref bean="redisTemplate"/>
 			</constructor-arg>
 	</bean>
+	<xcache:config local="localCache" remote="remoteCache"/>
+	<xcache:autoproxy/>
 	
 使用：
 	
