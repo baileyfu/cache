@@ -1,4 +1,4 @@
-package xcache.bean;
+package xcache.local;
 
 import java.util.concurrent.TimeUnit;
 
@@ -8,7 +8,6 @@ import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
-import xcache.LocalCache;
 import xcache.XcacheLoggerHolder;
 
 /**
@@ -20,7 +19,7 @@ import xcache.XcacheLoggerHolder;
  * @version 2.1
  * @description 自定义缓存,由ActionTimer实现计时
  */
-public abstract class AutoCleanAbleCache<K,V> implements XcacheLoggerHolder,LocalCache<K,V> {
+public abstract class AutoCleanAbleCache<K,V> implements XcacheLoggerHolder{
 	private static final int DEFAULT_CLEAR_INTERVAL = 1;
 
 	/** 清理间隔(单位：分钟；最小为1分钟,默认1分钟) */
@@ -88,7 +87,7 @@ public abstract class AutoCleanAbleCache<K,V> implements XcacheLoggerHolder,Loca
 
 	abstract protected void clearExpiring();
 
-	class Entity {
+	protected class Entity {
 		V element;
 		long expiring;
 		long createTime;

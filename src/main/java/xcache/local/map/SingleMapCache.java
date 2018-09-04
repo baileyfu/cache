@@ -1,10 +1,11 @@
-package xcache.bean;
+package xcache.local.map;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import xcache.LocalCache;
 import xcache.em.TimeUnit;
+import xcache.local.MapCache;
 
 /**
  * 基于Map的Cache;需手动清理
@@ -25,7 +26,7 @@ public class SingleMapCache<K, V> implements LocalCache<K, V>, MapCache<K, V> {
 	}
 
 	@Override
-	public void put(K key, V value, long expiring, TimeUnit timeUnit) throws Exception {
+	public void put(K key, V value, long expiring, TimeUnit timeUnit) throws RuntimeException {
 		put(key, value);
 	}
 

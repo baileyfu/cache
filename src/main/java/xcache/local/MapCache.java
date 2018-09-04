@@ -1,4 +1,4 @@
-package xcache.bean;
+package xcache.local;
 
 import java.util.Map;
 
@@ -7,17 +7,17 @@ import xcache.LocalCache;
 public interface MapCache<K, V> extends LocalCache<K, V> {
 
 	@Override
-	default void put(K key, V value) throws Exception {
+	default void put(K key, V value) throws RuntimeException {
 		value().put(key, value);
 	}
 
 	@Override
-	default void remove(K key) throws Exception {
+	default void remove(K key) throws RuntimeException {
 		value().remove(key);
 	}
 
 	@Override
-	default V get(K key) throws Exception {
+	default V get(K key) throws RuntimeException {
 		return value().get(key);
 	}
 
@@ -32,7 +32,7 @@ public interface MapCache<K, V> extends LocalCache<K, V> {
 	}
 
 	@Override
-	default void clear() throws Exception {
+	default void clear() throws RuntimeException {
 		value().clear();
 	}
 

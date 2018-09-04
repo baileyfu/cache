@@ -1,4 +1,4 @@
-package xcache.bean;
+package xcache.local;
 
 import java.util.Collections;
 import java.util.Map;
@@ -7,8 +7,8 @@ import org.apache.commons.collections.map.LRUMap;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public interface SyncLRUMapGenerateAble {
-	// 默认size为100
-	int DEFAULT_SIZE = 100;
+	// 默认size为1000
+	int DEFAULT_SIZE = 1000;
 
 	default public Map generateLRUMap() {
 		return Collections.synchronizedMap(new LRUMap(DEFAULT_SIZE));

@@ -1,8 +1,10 @@
-package xcache.bean;
+package xcache.local.map;
 
 import java.util.Map;
 
 import xcache.em.TimeUnit;
+import xcache.local.MapCache;
+import xcache.local.SyncLRUMapGenerateAble;
 
 /**
  * 基于LRUMap实现；不支持expiring
@@ -13,26 +15,26 @@ import xcache.em.TimeUnit;
  * @param <K>
  * @param <V>
  */
-public class LRUCache<K, V> implements MapCache<K, V>, SyncLRUMapGenerateAble {
+public class LRUMapCache<K, V> implements MapCache<K, V>, SyncLRUMapGenerateAble {
 	private Map<K, V> cacheMap;
 
 	@SuppressWarnings("unchecked")
-	public LRUCache() {
+	public LRUMapCache() {
 		cacheMap = generateLRUMap();
 	}
 
 	@SuppressWarnings("unchecked")
-	public LRUCache(int size) {
+	public LRUMapCache(int size) {
 		cacheMap = generateLRUMap(size);
 	}
 
 	@SuppressWarnings("unchecked")
-	public LRUCache(Map<K, V> cacheMap) {
+	public LRUMapCache(Map<K, V> cacheMap) {
 		this.cacheMap = generateLRUMap(cacheMap);
 	}
 
 	@Override
-	public void put(K key, V value, long expiring, TimeUnit timeUnit) throws Exception {
+	public void put(K key, V value, long expiring, TimeUnit timeUnit) throws RuntimeException {
 		put(key, value);
 	}
 

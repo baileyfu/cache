@@ -1,4 +1,4 @@
-package xcache.bean;
+package xcache.local.map;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 import xcache.em.TimeUnit;
 import xcache.key.CacheKeyTransformer;
 import xcache.key.LimitedDumpFieldTransformer;
+import xcache.local.AutoCleanAbleCache;
+import xcache.local.MapCache;
 
 /**
  * 对key做hash存于多个Map
@@ -16,7 +18,7 @@ import xcache.key.LimitedDumpFieldTransformer;
  * @version 1.0
  * @date 2017-06-12 16:22
  */
-public class MultiMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> {
+public class MultiMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> implements MapCache<K, V>{
 	private CacheKeyTransformer kenGenerator;
 	private Map<Integer, Map<K, Entity>> cacheMap;
 	private volatile int size;
@@ -42,7 +44,7 @@ public class MultiMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> {
 	}
 
 	@Override
-	public void put(K key, V value) throws Exception {
+	public void put(K key, V value) throws RuntimeException {
 		Map<K, Entity> subMap = takeSub(kenGenerator.make(key));
 		if (!subMap.containsKey(key)) {
 			size++;
@@ -51,7 +53,7 @@ public class MultiMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> {
 	}
 
 	@Override
-	public void put(K key, V value, long expiring, TimeUnit timeUnit) throws Exception {
+	public void put(K key, V value, long expiring, TimeUnit timeUnit) throws RuntimeException {
 		Map<K, Entity> subMap = takeSub(kenGenerator.make(key));
 		if (!subMap.containsKey(key)) {
 			size++;
@@ -65,13 +67,13 @@ public class MultiMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> {
 	}
 
 	@Override
-	public void remove(K key) throws Exception {
+	public void remove(K key) throws RuntimeException {
 		if (takeSub(kenGenerator.make(key)).remove(key) != null)
 			size = size > 1 ? size - 1 : size;
 	}
 
 	@Override
-	public V get(K key) throws Exception {
+	public V get(K key) throws RuntimeException {
 		return takeSub(kenGenerator.make(key)).get(key).getElement();
 	}
 
@@ -90,7 +92,7 @@ public class MultiMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> {
 	}
 
 	@Override
-	public void clear() throws Exception {
+	public void clear() throws RuntimeException {
 		cacheMap.clear();
 	}
 
@@ -107,5 +109,10 @@ public class MultiMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> {
 
 	public void setKenGenerator(CacheKeyTransformer kenGenerator) {
 		this.kenGenerator = kenGenerator;
+	}
+
+	@Override
+	public Map<K, V> value() {
+		return null;
 	}
 }

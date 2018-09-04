@@ -1,4 +1,4 @@
-package xcache.bean;
+package xcache.local;
 
 import java.io.InputStream;
 
@@ -21,9 +21,9 @@ public class EHCache<K, V> implements LocalCache<K,V> {
 	/**
 	 * 
 	 * @param ehcacheName
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
-	public EHCache(String ehcacheName) throws Exception {
+	public EHCache(String ehcacheName) throws RuntimeException {
 		init(null, ehcacheName);
 	}
 
@@ -32,9 +32,9 @@ public class EHCache<K, V> implements LocalCache<K,V> {
 	 * @param configurationFileName
 	 *            配置文件绝对路径
 	 * @param ehcacheName
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
-	public EHCache(String configurationFileName, String ehcacheName) throws Exception {
+	public EHCache(String configurationFileName, String ehcacheName) throws RuntimeException {
 		CacheManager cacheManager = CacheManager.create(configurationFileName);
 		init(cacheManager, ehcacheName);
 	}
@@ -43,22 +43,22 @@ public class EHCache<K, V> implements LocalCache<K,V> {
 	 * 
 	 * @param config
 	 * @param ehcacheName
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
-	public EHCache(Configuration config, String ehcacheName) throws Exception {
+	public EHCache(Configuration config, String ehcacheName) throws RuntimeException {
 		CacheManager cacheManager = CacheManager.create(config);
 		init(cacheManager, ehcacheName);
 	}
 
-	public EHCache(InputStream inputStream, String ehcacheName) throws Exception {
+	public EHCache(InputStream inputStream, String ehcacheName) throws RuntimeException {
 		CacheManager cacheManager = CacheManager.create(inputStream);
 		init(cacheManager, ehcacheName);
 	}
 
-	private void init(CacheManager cacheManager, String ehcacheName) throws Exception {
+	private void init(CacheManager cacheManager, String ehcacheName) throws RuntimeException {
 		cache = (cacheManager == null ? CacheManager.create() : cacheManager).getCache(ehcacheName);
 		if (cache == null) {
-			throw new Exception("ehcache '" + ehcacheName + "' is not exist");
+			throw new RuntimeException("ehcache '" + ehcacheName + "' is not exist");
 		}
 	}
 
@@ -72,19 +72,19 @@ public class EHCache<K, V> implements LocalCache<K,V> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public V get(K key) throws Exception {
+	public V get(K key) throws RuntimeException {
 		Element element = cache.get(key);
 		return element == null ? null : (V) element.getObjectValue();
 	}
 
-	public void put(K key, V value) throws Exception {
+	public void put(K key, V value) throws RuntimeException {
 		Element element = new Element(key, value);
 		cache.remove(key);
 		cache.put(element);
 	}
 
 	@Override
-	public void put(K key, V value, long expiring, TimeUnit timeUnit) throws Exception {
+	public void put(K key, V value, long expiring, TimeUnit timeUnit) throws RuntimeException {
 		int expiringSeconds = timeUnit.toSeconds(expiring);
 		Element element = new Element(key, value, expiringSeconds, expiringSeconds);
 		cache.remove(key);
@@ -96,11 +96,11 @@ public class EHCache<K, V> implements LocalCache<K,V> {
 		return cache.isKeyInCache(key);
 	}
 
-	public void remove(K key) throws Exception {
+	public void remove(K key) throws RuntimeException {
 		cache.remove(key);
 	}
 
-	public void clear() throws Exception {
+	public void clear() throws RuntimeException {
 		cache.removeAll();
 	}
 

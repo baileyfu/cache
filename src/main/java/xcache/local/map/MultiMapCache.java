@@ -1,15 +1,15 @@
-package xcache.bean;
+package xcache.local.map;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import xcache.LocalCache;
 import xcache.em.TimeUnit;
 import xcache.key.CacheKeyTransformer;
 import xcache.key.LimitedDumpFieldTransformer;
+import xcache.local.MapCache;
 
-public class MultiMapCache<K, V> implements LocalCache<K, V> {
+public class MultiMapCache<K, V> implements MapCache<K, V> {
 	private CacheKeyTransformer kenGenerator;
 	private Map<Integer, Map<K, V>> cacheMap;
 	private volatile int size;
@@ -20,7 +20,7 @@ public class MultiMapCache<K, V> implements LocalCache<K, V> {
 	}
 
 	@Override
-	public void put(K key, V value) throws Exception {
+	public void put(K key, V value) throws RuntimeException {
 		Map<K, V> subMap = takeSub(kenGenerator.make(key));
 		if (!subMap.containsKey(key)) {
 			size++;
@@ -29,7 +29,7 @@ public class MultiMapCache<K, V> implements LocalCache<K, V> {
 	}
 
 	@Override
-	public void put(K key, V value, long expiring, TimeUnit timeUnit) throws Exception {
+	public void put(K key, V value, long expiring, TimeUnit timeUnit) throws RuntimeException {
 		put(key, value);
 	}
 
@@ -39,13 +39,13 @@ public class MultiMapCache<K, V> implements LocalCache<K, V> {
 	}
 
 	@Override
-	public void remove(K key) throws Exception {
+	public void remove(K key) throws RuntimeException {
 		if (takeSub(kenGenerator.make(key)).remove(key) != null)
 			size = size > 1 ? size - 1 : size;
 	}
 
 	@Override
-	public V get(K key) throws Exception {
+	public V get(K key) throws RuntimeException {
 		return takeSub(kenGenerator.make(key)).get(key);
 	}
 
@@ -64,12 +64,18 @@ public class MultiMapCache<K, V> implements LocalCache<K, V> {
 	}
 
 	@Override
-	public void clear() throws Exception {
+	public void clear() throws RuntimeException {
 		cacheMap.clear();
 	}
 
 	public void setKenGenerator(CacheKeyTransformer kenGenerator) {
 		this.kenGenerator = kenGenerator;
 	}
-
+	public Map<Integer, Map<K, V>> values() {
+		return cacheMap;
+	}
+	@Override
+	public Map<K, V> value() {
+		return null;
+	}
 }

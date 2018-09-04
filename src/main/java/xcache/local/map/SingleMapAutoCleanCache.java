@@ -1,10 +1,12 @@
-package xcache.bean;
+package xcache.local.map;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import xcache.em.TimeUnit;
+import xcache.local.AutoCleanAbleCache;
+import xcache.local.MapCache;
 
 /**
  * 基于Map的Cache;key不做hash直接存储
@@ -15,7 +17,7 @@ import xcache.em.TimeUnit;
  * @version 1.8
  * @description 自定义缓存
  */
-public class SingleMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> {
+public class SingleMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> implements MapCache<K, V>{
 	private Map<K, Entity> cacheMap;
 
 	public SingleMapAutoCleanCache(){
@@ -35,19 +37,19 @@ public class SingleMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> {
 	private void init(){
 		cacheMap = new ConcurrentHashMap<>();
 	}
-	public V get(K key) throws Exception {
+	public V get(K key) throws RuntimeException {
 		Entity entity = cacheMap.get(key);
 		return entity == null ? null : entity.getElement();
 	}
 
-	public void put(K key, V value) throws Exception {
+	public void put(K key, V value) throws RuntimeException {
 		if (key != null && value != null) {
 			cacheMap.put(key, new Entity(value));
 		}
 	}
 
 	@Override
-	public void put(K key, V value, long expiring, TimeUnit timeUnit) throws Exception {
+	public void put(K key, V value, long expiring, TimeUnit timeUnit) throws RuntimeException {
 		if (key != null && value != null) {
 			cacheMap.put(key, new Entity(value, timeUnit.toMilliseconds(expiring)));
 		}
@@ -58,11 +60,11 @@ public class SingleMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> {
 		return cacheMap.containsKey(key);
 	}
 
-	public void remove(K key) throws Exception {
+	public void remove(K key) throws RuntimeException {
 		cacheMap.remove(key);
 	}
 
-	public void clear() throws Exception {
+	public void clear() throws RuntimeException {
 		cacheMap.clear();
 	}
 
@@ -76,5 +78,10 @@ public class SingleMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> {
 			Entity value = cacheMap.get(key);
 			return value == null || value.unAble();
 		}).collect(Collectors.toList()).forEach(cacheMap::remove);
+	}
+
+	@Override
+	public Map<K, V> value() {
+		return null;
 	}
 }
