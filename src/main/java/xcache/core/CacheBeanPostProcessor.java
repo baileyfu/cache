@@ -6,6 +6,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
+import commons.beanutils.BeanCopierUtils;
 import xcache.annotation.LCache;
 import xcache.annotation.RCache;
 import xcache.aspect.CGLibEnhancer;
@@ -32,7 +33,9 @@ public class CacheBeanPostProcessor implements BeanPostProcessor {
 				}
 			}
 			try {
-				return enhancingFactory.create(arg0).enhance();
+				Object enhancedBean=enhancingFactory.create(arg0).enhance();
+				BeanCopierUtils.copyParentAttribute(arg0, enhancedBean);
+				return enhancedBean;
 			} catch (Exception e) {
 				throw new FatalBeanException("create enhanced cache bean error :" + arg1, e);
 			}
