@@ -1,4 +1,4 @@
-package xcache.aspect;
+package com.lz.components.cache.aspect;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
@@ -6,14 +6,15 @@ import java.util.HashSet;
 
 import org.apache.commons.lang3.StringUtils;
 
-import xcache.annotation.LCache;
-import xcache.annotation.RCache;
-import xcache.annotation.XCache;
-import xcache.em.CacheType;
-import xcache.em.TimeUnit;
+import com.lz.components.cache.annotation.LCache;
+import com.lz.components.cache.annotation.RCache;
+import com.lz.components.cache.annotation.XCache;
+import com.lz.components.cache.em.CacheType;
+import com.lz.components.cache.em.TimeUnit;
 
 public class AnnoBean implements Cloneable{
 	CacheType cacheType;
+	String cacheName;
 	String shardName;
 	String key;
 	String[] remove;
@@ -23,6 +24,14 @@ public class AnnoBean implements Cloneable{
 	String prefix;
 	String suffix;
 
+	public AnnoBean() {
+		cacheName = StringUtils.EMPTY;
+		shardName = StringUtils.EMPTY;
+		key = StringUtils.EMPTY;
+		timeUnit = TimeUnit.SECOND;
+		prefix = StringUtils.EMPTY;
+		suffix = StringUtils.EMPTY;
+	}
 	boolean isLocal() {
 		return cacheType == CacheType.LOCAL;
 	}
@@ -31,16 +40,16 @@ public class AnnoBean implements Cloneable{
 		return cacheType == CacheType.REMOTE;
 	}
 
-	public static AnnoBean toAnnoBean(Annotation cacheAnno,final AnnoBean kpAnnoBean){
+	public static AnnoBean toAnnoBean(Annotation cacheAnno,final AnnoBean xAnnoBean){
 		AnnoBean ab = null;
 		try {
-			ab = kpAnnoBean == null ? new AnnoBean() : (AnnoBean) kpAnnoBean.clone();
+			ab = xAnnoBean == null ? new AnnoBean() : (AnnoBean) xAnnoBean.clone();
 		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 		if (cacheAnno instanceof XCache) {
 			XCache xCache = (XCache) cacheAnno;
-			ab = new AnnoBean();
+			ab.cacheName=xCache.cacheName();
 			ab.shardName = xCache.shardName();
 			ab.key = xCache.key();
 			ab.remove = xCache.remove();
@@ -51,6 +60,7 @@ public class AnnoBean implements Cloneable{
 		} else if (cacheAnno instanceof RCache) {
 			RCache rCache = (RCache) cacheAnno;
 			ab.cacheType = CacheType.REMOTE;
+			ab.cacheName=rCache.cacheName();
 			ab.shardName=rCache.shardName();
 			ab.key = StringUtils.isNotBlank(rCache.key()) ? rCache.key() : ab.key;
 			ab.remove = unique(ab.remove, rCache.remove());
@@ -62,6 +72,7 @@ public class AnnoBean implements Cloneable{
 		} else if (cacheAnno instanceof LCache) {
 			LCache lCache = (LCache) cacheAnno;
 			ab.cacheType = CacheType.LOCAL;
+			ab.cacheName=lCache.cacheName();
 			ab.shardName = lCache.shardName();
 			ab.key = StringUtils.isNotBlank(lCache.key()) ? lCache.key() : ab.key;
 			ab.remove = unique(ab.remove, lCache.remove());
@@ -96,8 +107,8 @@ public class AnnoBean implements Cloneable{
 
 	@Override
 	public String toString() {
-		return "AnnoBean [cacheType=" + cacheType + ", shardName=" + shardName + ", key=" + key + ", remove=" + Arrays.toString(remove) + ", throwable=" + throwable
-				+ ", expiring=" + expiring + ", timeUnit=" + timeUnit + ", prefix=" + prefix + ", suffix=" + suffix + "]";
+		return "AnnoBean [cacheType=" + cacheType + ", cacheName=" + cacheName + ", shardName=" + shardName + ", key="
+				+ key + ", remove=" + Arrays.toString(remove) + ", throwable=" + throwable + ", expiring=" + expiring
+				+ ", timeUnit=" + timeUnit + ", prefix=" + prefix + ", suffix=" + suffix + "]";
 	}
-	
 }

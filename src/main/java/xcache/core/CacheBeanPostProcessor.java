@@ -1,17 +1,18 @@
-package xcache.core;
+package com.lz.components.cache.core;
 
 import java.lang.reflect.Method;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.stereotype.Component;
 
-import commons.beanutils.BeanCopierUtils;
-import xcache.annotation.LCache;
-import xcache.annotation.RCache;
-import xcache.aspect.CGLibEnhancer;
-import xcache.aspect.CacheEnhancer;
-import xcache.aspect.EnhancingFactory;
+import com.lz.components.cache.annotation.LCache;
+import com.lz.components.cache.annotation.RCache;
+import com.lz.components.cache.aspect.CGLibEnhancer;
+import com.lz.components.cache.aspect.CacheEnhancer;
+import com.lz.components.cache.aspect.EnhancingFactory;
+import com.lz.components.common.beanutil.BeanCopierUtils;
 
 /**
  * 
@@ -19,6 +20,7 @@ import xcache.aspect.EnhancingFactory;
  * @version 1.0
  * @date 2017-06-20 14:01
  */
+@Component
 public class CacheBeanPostProcessor implements BeanPostProcessor {
 	EnhancingFactory<CacheEnhancer> enhancingFactory = CGLibEnhancer::create;
 

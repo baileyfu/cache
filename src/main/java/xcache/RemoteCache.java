@@ -1,4 +1,4 @@
-package xcache;
+package com.lz.components.cache;
 
 /**
  * 第三方缓存类型
@@ -7,6 +7,6 @@ package xcache;
  * @version 1.0
  * @date 2017-06-12 17:17
  */
-public interface RemoteCache extends Cache<Object, Object> {
+public abstract class RemoteCache extends AbstractCache<Object,Object> {
 
 }

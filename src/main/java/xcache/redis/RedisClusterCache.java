@@ -1,7 +1,8 @@
-package xcache.redis;
+package com.lz.components.cache.redis;
 
-import xcache.RemoteCache;
-import xcache.em.TimeUnit;
+import com.lz.components.cache.RemoteCache;
+import com.lz.components.cache.em.TimeUnit;
+import com.lz.components.common.exception.LzRuntimeException;
 
 /**
  * 基于Redis集群方式的实现
@@ -10,32 +11,7 @@ import xcache.em.TimeUnit;
  * @version 1.0
  * @date 2017-11-06 10:42
  */
-public class RedisClusterCache implements RemoteCache {
-
-	@Override
-	public void put(Object key, Object value) throws Exception {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void put(Object key, Object value, long expiring, TimeUnit timeUnit) throws Exception {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void remove(Object key) throws Exception {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public Object get(Object key) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
+public class RedisClusterCache extends RemoteCache {
 	@Override
 	public boolean exists(Object key) {
 		// TODO Auto-generated method stub
@@ -43,15 +19,27 @@ public class RedisClusterCache implements RemoteCache {
 	}
 
 	@Override
-	public int size() {
+	public void clear() throws LzRuntimeException {
 		// TODO Auto-generated method stub
-		return 0;
+
 	}
 
 	@Override
-	public void clear() throws Exception {
+	protected Object doGet(Object key) throws LzRuntimeException {
 		// TODO Auto-generated method stub
+		return null;
+	}
 
+	@Override
+	protected void doPut(Object key, Object value, long expiring, TimeUnit timeUnit) throws LzRuntimeException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void doRemove(Object key) throws LzRuntimeException {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

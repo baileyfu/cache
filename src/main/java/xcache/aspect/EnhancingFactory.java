@@ -1,4 +1,4 @@
-package xcache.aspect;
+package com.lz.components.cache.aspect;
 
 @FunctionalInterface
 public interface EnhancingFactory<P extends CacheEnhancer> {

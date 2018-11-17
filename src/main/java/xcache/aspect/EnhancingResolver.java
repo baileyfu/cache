@@ -1,4 +1,4 @@
-package xcache.aspect;
+package com.lz.components.cache.aspect;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -13,10 +13,11 @@ import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 
-import commons.beanutils.BeanUtils;
-import xcache.annotation.LCache;
-import xcache.annotation.RCache;
-import xcache.annotation.XCache;
+import com.lz.components.cache.annotation.LCache;
+import com.lz.components.cache.annotation.RCache;
+import com.lz.components.cache.annotation.XCache;
+import com.lz.components.common.beanutil.BeanUtils;
+import com.lz.components.common.log.holder.CommonLoggerHolder;
 
 /**
  * 原类型分析以及key生成
@@ -25,16 +26,16 @@ import xcache.annotation.XCache;
  * @version 1.0
  * @date 2017-06-22 14:27
  */
-public abstract class EnhancingResolver implements CacheEnhancer {
+public abstract class EnhancingResolver implements CacheEnhancer,CommonLoggerHolder {
 	private static final String KEY_SIGN = "_";
 	private Map<String, AnnoBean> gmMap = new HashMap<>();
 	private Map<String, List<AnnoBean>> rmMap = new HashMap<>();
 
 	public EnhancingResolver(Class<?> clazz) {
-		AnnoBean kpAnnoBean = null;
-		XCache kpCache = clazz.getDeclaredAnnotation(XCache.class);
-		if (kpCache != null) {
-			kpAnnoBean = AnnoBean.toAnnoBean(kpCache, null);
+		AnnoBean xAnnoBean = null;
+		XCache xCache = clazz.getDeclaredAnnotation(XCache.class);
+		if (xCache != null) {
+			xAnnoBean = AnnoBean.toAnnoBean(xCache, null);
 		}
 		for (Method m : clazz.getDeclaredMethods()) {
 			// 无返回值的方法不缓存
@@ -43,7 +44,7 @@ public abstract class EnhancingResolver implements CacheEnhancer {
 
 			RCache rCache = m.getDeclaredAnnotation(RCache.class);
 			if (rCache != null) {
-				AnnoBean ab = AnnoBean.toAnnoBean(rCache, kpAnnoBean);
+				AnnoBean ab = AnnoBean.toAnnoBean(rCache, xAnnoBean);
 				/** 以方法的详细描述为key，匹配唯一方法 */
 				gmMap.put(m.toGenericString(), ab);
 				saveRemoveMethods(ab);
@@ -52,7 +53,7 @@ public abstract class EnhancingResolver implements CacheEnhancer {
 			}
 			LCache lCache = m.getDeclaredAnnotation(LCache.class);
 			if (lCache != null) {
-				AnnoBean ab = AnnoBean.toAnnoBean(lCache, kpAnnoBean);
+				AnnoBean ab = AnnoBean.toAnnoBean(lCache, xAnnoBean);
 				gmMap.put(m.toGenericString(), ab);
 				saveRemoveMethods(ab);
 			}
@@ -62,7 +63,7 @@ public abstract class EnhancingResolver implements CacheEnhancer {
 	private void saveRemoveMethods(AnnoBean ab) {
 		if (ab.remove != null && ab.remove.length > 0) {
 			for (String methodName : ab.remove) {
-				if (StringUtils.isNotBlank(methodName)) {
+				if (!StringUtils.isBlank(methodName)) {
 					/** 一个remove方法可匹配多个缓存方法 */
 					List<AnnoBean> abColl = rmMap.get(methodName);
 					if (abColl == null) {
@@ -126,6 +127,7 @@ public abstract class EnhancingResolver implements CacheEnhancer {
 				try {
 					key = hasMatched ? parser.parseExpression(annoBean.key).getValue(context, Object.class) : null;
 				} catch (Exception e) {
+					LOGGER.error("EnhancingResolver.renderKey error !", e);
 				}
 			}
 			key = key == null ? annoBean.key : key;

@@ -1,22 +1,23 @@
-package xcache.aspect;
+package com.lz.components.cache.aspect;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
 
-import commons.fun.Supplier;
+import com.lz.components.cache.core.CacheManager;
+import com.lz.components.cache.core.CacheManagerFactory;
+import com.lz.components.common.exception.LzRuntimeException;
+
 import net.sf.cglib.proxy.Callback;
 import net.sf.cglib.proxy.CallbackFilter;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
 import net.sf.cglib.proxy.NoOp;
-import xcache.core.CacheManager;
 
 /**
  * 基于CGLib增强
@@ -38,7 +39,7 @@ public class CGLibEnhancer extends EnhancingResolver {
 					try {
 						return proxy.invoke(original, params);
 					} catch (Throwable e) {
-						throw new Exception(e);
+						throw new LzRuntimeException(e);
 					}
 				});
 			}
@@ -50,7 +51,7 @@ public class CGLibEnhancer extends EnhancingResolver {
 					try {
 						return proxy.invoke(original, params);
 					} catch (Throwable e) {
-						throw new Exception(e);
+						throw new LzRuntimeException(e);
 					}
 				});
 			}
@@ -67,12 +68,12 @@ public class CGLibEnhancer extends EnhancingResolver {
 	}
 
 	private Object excuteGet(Method method, Function<AnnoBean, Object> renderKey, Supplier<Object> original) throws Exception {
-		CacheManager cacheManager = CacheManager.getInstance();
+		AnnoBean annoBean = annoInfo4get(method.toGenericString());
+		CacheManager cacheManager = CacheManagerFactory.get(annoBean.cacheName);
 		// CacheManager未初始化则不执行缓存逻辑
-		if (cacheManager == null) {
+		if (cacheManager == null || !cacheManager.useable()) {
 			return original.get();
 		}
-		AnnoBean annoBean = annoInfo4get(method.toGenericString());
 		Object key = renderKey.apply(annoBean);
 		/** 若方法无参数，或无法匹配key则无法缓存 */
 		if (key == null) {
@@ -103,24 +104,24 @@ public class CGLibEnhancer extends EnhancingResolver {
 
 	private Object excuteRemove(Method method, Function<AnnoBean, Object> renderKey, Supplier<Object> original) throws Exception {
 		Object result = original.get();
-		CacheManager cacheManager = CacheManager.getInstance();
 		// CacheManager未初始化则不执行缓存逻辑
-		if (cacheManager != null) {
-			List<AnnoBean> annoBeanList = annoInfo4remove(method.getName());
-			for (AnnoBean annoBean : annoBeanList) {
-				Object key = renderKey.apply(annoBean);
-				/** 若方法无参数，则无需清除缓存 */
-				if (key == null) {
-					continue;
-				}
-				$doc(annoBean, () -> {
-					cacheManager.removeRemote(annoBean.shardName, key);
-					return null;
-				}, () -> {
-					cacheManager.removeLocal(annoBean.shardName, key);
-					return null;
-				});
+		List<AnnoBean> annoBeanList = annoInfo4remove(method.getName());
+		for (AnnoBean annoBean : annoBeanList) {
+			CacheManager cacheManager = CacheManagerFactory.get(annoBean.cacheName);
+			if (cacheManager == null || !cacheManager.useable())
+				continue;
+			Object key = renderKey.apply(annoBean);
+			/** 若方法无参数，则无需清除缓存 */
+			if (key == null) {
+				continue;
 			}
+			$doc(annoBean, () -> {
+				cacheManager.removeRemote(annoBean.shardName, key);
+				return null;
+			}, () -> {
+				cacheManager.removeLocal(annoBean.shardName, key);
+				return null;
+			});
 		}
 		return result;
 	}
@@ -132,9 +133,9 @@ public class CGLibEnhancer extends EnhancingResolver {
 			} else if (annoBean.isLocal()) {
 				return doLocal.get();
 			}
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			if (annoBean.throwable) {
-				throw e;
+				throw new LzRuntimeException(e);
 			}
 		}
 		return null;
@@ -145,17 +146,6 @@ public class CGLibEnhancer extends EnhancingResolver {
 		return enhancer.create();
 	}
 
-	private static Map<String, CGLibEnhancer> instanceMap = new HashMap<>();
-
-	@Deprecated
-	public static CGLibEnhancer createInstance(Object original) {
-		CGLibEnhancer instance = instanceMap.get(original.getClass().getTypeName());
-		if (instance == null) {
-			instance = new CGLibEnhancer(original);
-			instanceMap.put(original.getClass().getTypeName(), instance);
-		}
-		return instance;
-	}
 	public static CGLibEnhancer create(Object original) {
 		return new CGLibEnhancer(original);
 	}

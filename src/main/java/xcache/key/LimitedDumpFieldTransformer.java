@@ -1,6 +1,6 @@
-package xcache.key;
+package com.lz.components.cache.key;
 
-import commons.beanutils.BeanUtils;
+import com.lz.components.common.beanutil.BeanUtils;
 
 /**
  * 将Object所有对象属性dump成String,再做hash计算,然后求模

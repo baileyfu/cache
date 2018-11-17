@@ -1,4 +1,4 @@
-package xcache.key;
+package com.lz.components.cache.key;
 
 /**
  * 直接以Object的hashcode作为key

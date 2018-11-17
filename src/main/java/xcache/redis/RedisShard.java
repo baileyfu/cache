@@ -1,8 +1,8 @@
-package xcache.redis;
+package com.lz.components.cache.redis;
 
 import org.apache.commons.lang3.math.NumberUtils;
 
-import xcache.Shard;
+import com.lz.components.cache.Shard;
 
 /**
  * @author bailey

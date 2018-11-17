@@ -1,6 +1,6 @@
-package xcache.key;
+package com.lz.components.cache.key;
 
-import commons.beanutils.BeanUtils;
+import com.lz.components.common.beanutil.BeanUtils;
 
 public class DumpFieldTransformer implements CacheKeyTransformer {
 	@Override

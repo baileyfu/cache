@@ -1,41 +1,47 @@
-package xcache.local;
+package com.lz.components.cache.local;
 
 import java.util.Map;
 
-import xcache.LocalCache;
+import com.alibaba.fastjson.JSONObject;
+import com.lz.components.cache.LocalCache;
+import com.lz.components.cache.em.CacheParams;
+import com.lz.components.cache.em.TimeUnit;
+import com.lz.components.common.exception.LzRuntimeException;
 
-public interface MapCache<K, V> extends LocalCache<K, V> {
+public abstract class MapCache extends LocalCache {
 
 	@Override
-	default void put(K key, V value) throws RuntimeException {
+	protected void doPut(Object key, Object value, long expiring, TimeUnit timeUnit) throws LzRuntimeException {
 		value().put(key, value);
 	}
 
 	@Override
-	default void remove(K key) throws RuntimeException {
+	protected void doRemove(Object key) throws LzRuntimeException {
 		value().remove(key);
 	}
 
 	@Override
-	default V get(K key) throws RuntimeException {
+	protected Object doGet(Object key) throws LzRuntimeException {
 		return value().get(key);
 	}
 
 	@Override
-	default boolean exists(K key) {
+	public boolean exists(Object key) {
 		return value().containsKey(key);
 	}
 
 	@Override
-	default int size() {
-		return value().size();
-	}
-
-	@Override
-	default void clear() throws RuntimeException {
+	public void clear() throws LzRuntimeException {
 		value().clear();
 	}
-
-	Map<K, V> value();
-
+	@Override
+	public JSONObject size() {
+		JSONObject size = super.size();
+		size.put(CacheParams.SIZE_CAPACITY.NAME, 0);
+		Map<Object, Object> map = value();
+		size.put(CacheParams.SIZE_QUANTITY.NAME, map == null ? -1 : map.size());
+		size.put(CacheParams.SIZE_MEMORY.NAME, 0);
+		return size;
+	}
+	protected abstract Map<Object, Object> value();
 }

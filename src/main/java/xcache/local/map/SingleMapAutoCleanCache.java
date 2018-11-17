@@ -1,12 +1,14 @@
-package xcache.local.map;
+package com.lz.components.cache.local.map;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import xcache.em.TimeUnit;
-import xcache.local.AutoCleanAbleCache;
-import xcache.local.MapCache;
+import com.alibaba.fastjson.JSONObject;
+import com.lz.components.cache.em.CacheParams;
+import com.lz.components.cache.em.TimeUnit;
+import com.lz.components.cache.local.AutoCleanAbleMapCache;
+import com.lz.components.common.exception.LzRuntimeException;
 
 /**
  * 基于Map的Cache;key不做hash直接存储
@@ -17,9 +19,8 @@ import xcache.local.MapCache;
  * @version 1.8
  * @description 自定义缓存
  */
-public class SingleMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> implements MapCache<K, V>{
-	private Map<K, Entity> cacheMap;
-
+public class SingleMapAutoCleanCache extends AutoCleanAbleMapCache{
+	protected Map<Object, Entity> cacheMap;
 	public SingleMapAutoCleanCache(){
 		super();
 		init();
@@ -30,46 +31,48 @@ public class SingleMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> impl
 	 * 
 	 * @param clearInterval
 	 */
-	public SingleMapAutoCleanCache(int clearInterval) {
+	public SingleMapAutoCleanCache(Integer clearInterval) {
 		super(clearInterval);
 		init();
 	}
 	private void init(){
 		cacheMap = new ConcurrentHashMap<>();
 	}
-	public V get(K key) throws RuntimeException {
+	protected Object doGet(Object key) throws LzRuntimeException {
 		Entity entity = cacheMap.get(key);
 		return entity == null ? null : entity.getElement();
 	}
 
-	public void put(K key, V value) throws RuntimeException {
+	protected void doPut(Object key, Object value, long expiring, TimeUnit timeUnit) throws LzRuntimeException {
 		if (key != null && value != null) {
-			cacheMap.put(key, new Entity(value));
+			if (expiring > 0) {
+				cacheMap.put(key, new Entity(value, timeUnit.toMilliseconds(expiring)));
+			}else{
+				cacheMap.put(key, new Entity(value));
+			}
 		}
 	}
 
 	@Override
-	public void put(K key, V value, long expiring, TimeUnit timeUnit) throws RuntimeException {
-		if (key != null && value != null) {
-			cacheMap.put(key, new Entity(value, timeUnit.toMilliseconds(expiring)));
-		}
-	}
-
-	@Override
-	public boolean exists(K key) {
+	public boolean exists(Object key) {
 		return cacheMap.containsKey(key);
 	}
 
-	public void remove(K key) throws RuntimeException {
+	protected void doRemove(Object key) throws LzRuntimeException {
 		cacheMap.remove(key);
 	}
 
-	public void clear() throws RuntimeException {
+	public void clear() throws LzRuntimeException {
 		cacheMap.clear();
 	}
 
-	public int size() {
-		return cacheMap.size();
+	@Override
+	public JSONObject size() {
+		JSONObject size = super.size();
+		size.put(CacheParams.SIZE_CAPACITY.NAME, 0);
+		size.put(CacheParams.SIZE_QUANTITY.NAME, this.size());
+		size.put(CacheParams.SIZE_MEMORY.NAME, 0);
+		return size;
 	}
 
 	@Override
@@ -81,7 +84,7 @@ public class SingleMapAutoCleanCache<K, V> extends AutoCleanAbleCache<K, V> impl
 	}
 
 	@Override
-	public Map<K, V> value() {
+	public Map<Object, Object> value() {
 		return null;
 	}
 }

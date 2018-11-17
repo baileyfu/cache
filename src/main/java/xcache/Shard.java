@@ -1,4 +1,4 @@
-package xcache;
+package com.lz.components.cache;
 
 /**
  * 分片

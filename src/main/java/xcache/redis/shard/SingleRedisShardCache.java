@@ -1,4 +1,4 @@
-package xcache.redis;
+package com.lz.components.cache.redis.shard;
 
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -10,9 +10,14 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.TimeoutUtils;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
-import xcache.Shard;
-import xcache.ShardCache;
-import xcache.em.TimeUnit;
+import com.alibaba.fastjson.JSONObject;
+import com.lz.components.cache.Shard;
+import com.lz.components.cache.ShardCache;
+import com.lz.components.cache.em.CacheParams;
+import com.lz.components.cache.em.TimeUnit;
+import com.lz.components.cache.redis.RedisShard;
+import com.lz.components.cache.redis.SingleRedisCache;
+import com.lz.components.common.exception.LzRuntimeException;
 
 /**
  * 可指定数据库下标
@@ -29,12 +34,13 @@ public class SingleRedisShardCache extends SingleRedisCache implements ShardCach
 	}
 
 	@Override
-	public void put(String shardName, Object key, Object value) throws Exception {
+	public void put(String shardName, Object key, Object value) throws LzRuntimeException {
 		put(shardName, key, value, -1, null);
 	}
 
 	@Override
-	public void put(String shardName, Object key, Object value, long expiring, TimeUnit timeUnit) throws Exception {
+	public void put(String shardName, Object key, Object value, long expiring, TimeUnit timeUnit) throws LzRuntimeException {
+		putCount++;
 		int dbIndex=shard.convertToIndex(shardName);
 		if(dbIndex==-1){
 			super.put(key, value, expiring, timeUnit);
@@ -56,7 +62,8 @@ public class SingleRedisShardCache extends SingleRedisCache implements ShardCach
 	}
 
 	@Override
-	public void remove(String shardName, Object key) throws Exception {
+	public void remove(String shardName, Object key) throws LzRuntimeException {
+		removeCount++;
 		int dbIndex=shard.convertToIndex(shardName);
 		if(dbIndex==-1){
 			super.remove(key);
@@ -73,20 +80,28 @@ public class SingleRedisShardCache extends SingleRedisCache implements ShardCach
 	}
 
 	@Override
-	public Object get(String shardName, Object key) throws Exception {
+	public Object get(String shardName, Object key) throws LzRuntimeException {
+		getCount++;
 		int dbIndex=shard.convertToIndex(shardName);
+		Object value = null;
 		if(dbIndex==-1){
-			return super.get(key);
+			value = super.get(key);
+		} else {
+			value = redisTemplate.execute(new RedisCallback<Object>() {
+				@SuppressWarnings("unchecked")
+				@Override
+				public Object doInRedis(RedisConnection connection) throws DataAccessException {
+					connection.select(dbIndex);
+					byte[] valueBytes = connection
+							.get(serialize.apply((RedisSerializer<Object>) redisTemplate.getKeySerializer(), key));
+					return redisTemplate.getValueSerializer().deserialize(valueBytes);
+				}
+			});
 		}
-		return redisTemplate.execute(new RedisCallback<Object>() {
-			@SuppressWarnings("unchecked")
-			@Override
-			public Object doInRedis(RedisConnection connection) throws DataAccessException {
-				connection.select(dbIndex);
-				byte[] valueBytes = connection.get(serialize.apply((RedisSerializer<Object>) redisTemplate.getKeySerializer(), key));
-				return redisTemplate.getValueSerializer().deserialize(valueBytes);
-			}
-		});
+		if (value != null) {
+			hitCount++;
+		}
+		return value;
 	}
 
 	@Override
@@ -106,22 +121,26 @@ public class SingleRedisShardCache extends SingleRedisCache implements ShardCach
 	}
 
 	@Override
-	public int size(String shardName) {
-		int dbIndex=shard.convertToIndex(shardName);
-		if(dbIndex==-1){
+	public JSONObject size(String shardName) {
+		int dbIndex = shard.convertToIndex(shardName);
+		if (dbIndex == -1) {
 			return super.size();
 		}
-		return redisTemplate.execute(new RedisCallback<Long>() {
+		JSONObject size = new JSONObject();
+		size.put(CacheParams.SIZE_CAPACITY.NAME, 0);
+		size.put(CacheParams.SIZE_QUANTITY.NAME, redisTemplate.execute(new RedisCallback<Long>() {
 			@Override
 			public Long doInRedis(RedisConnection connection) throws DataAccessException {
 				connection.select(dbIndex);
 				return connection.dbSize();
 			}
-		}).intValue();
+		}).intValue());
+		size.put(CacheParams.SIZE_MEMORY.NAME, 0);
+		return size;
 	}
 
 	@Override
-	public void clear(String shardName) throws Exception {
+	public void clear(String shardName) throws LzRuntimeException {
 		int dbIndex=shard.convertToIndex(shardName);
 		if (dbIndex == -1) {
 			super.clear();

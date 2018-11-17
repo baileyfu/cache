@@ -1,14 +1,15 @@
-package xcache.local;
+package com.lz.components.cache.local;
 
 import java.util.concurrent.TimeUnit;
 
-import commons.variable.ActionTimer;
+import com.lz.components.common.log.holder.CommonLoggerHolder;
+import com.lz.components.common.util.variable.ActionTimer;
+
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
-import xcache.XcacheLoggerHolder;
 
 /**
  * 可自动清理过期对象的本地缓存
@@ -19,7 +20,7 @@ import xcache.XcacheLoggerHolder;
  * @version 2.1
  * @description 自定义缓存,由ActionTimer实现计时
  */
-public abstract class AutoCleanAbleCache<K,V> implements XcacheLoggerHolder{
+public abstract class AutoCleanAbleMapCache extends MapCache implements CommonLoggerHolder{
 	private static final int DEFAULT_CLEAR_INTERVAL = 1;
 
 	/** 清理间隔(单位：分钟；最小为1分钟,默认1分钟) */
@@ -31,13 +32,13 @@ public abstract class AutoCleanAbleCache<K,V> implements XcacheLoggerHolder{
 	private Observable<Long> obva;
 	private Disposable emitterDis;
 
-	public AutoCleanAbleCache(){
+	public AutoCleanAbleMapCache(){
 		this.clearInterval=DEFAULT_CLEAR_INTERVAL;
 		startEmit();
 	}
 	
-	public AutoCleanAbleCache(int clearInterval) {
-		this.clearInterval = clearInterval < 1 ? 1 : clearInterval;
+	public AutoCleanAbleMapCache(Integer clearInterval) {
+		this.clearInterval = clearInterval < 1 ? DEFAULT_CLEAR_INTERVAL : clearInterval;
 		startEmit();
 	}
 
@@ -88,17 +89,17 @@ public abstract class AutoCleanAbleCache<K,V> implements XcacheLoggerHolder{
 	abstract protected void clearExpiring();
 
 	protected class Entity {
-		V element;
+		Object element;
 		long expiring;
 		long createTime;
 
-		public Entity(V element) {
+		public Entity(Object element) {
 			this.element = element;
 			expiring=0l;
 			this.createTime = System.currentTimeMillis();
 		}
 
-		public Entity(V element, long expiring) {
+		public Entity(Object element, long expiring) {
 			this.element = element;
 			this.expiring = expiring;
 			this.createTime = System.currentTimeMillis();
@@ -108,7 +109,7 @@ public abstract class AutoCleanAbleCache<K,V> implements XcacheLoggerHolder{
 			return expiring > 0 && (createTime + expiring ) <= System.currentTimeMillis();
 		}
 
-		public V getElement() {
+		public Object getElement() {
 			if (unAble()) {
 				return null;
 			}

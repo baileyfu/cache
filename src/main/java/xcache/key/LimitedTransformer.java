@@ -1,4 +1,4 @@
-package xcache.key;
+package com.lz.components.cache.key;
 
 /**
  * 

@@ -1,4 +1,4 @@
-package xcache.annotation;
+package com.lz.components.cache.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,11 +7,17 @@ import java.lang.annotation.Target;
 
 import org.apache.commons.lang3.StringUtils;
 
-import xcache.em.TimeUnit;
+import com.lz.components.cache.core.CacheManagerFactory;
+import com.lz.components.cache.em.TimeUnit;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface LCache {
+	/**
+	 * CacheManager的名字;在多种缓存混合使用时用到
+	 * @return
+	 */
+	String cacheName() default CacheManagerFactory.DEFAULT_CACHE_MANAGER_NAME;
 	/**
 	 * 数据分库名;由具体实现类解析到对应的数据库下标格式
 	 * 

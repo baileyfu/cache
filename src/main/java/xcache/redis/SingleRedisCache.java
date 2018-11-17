@@ -1,4 +1,4 @@
-package xcache.redis;
+package com.lz.components.cache.redis;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
@@ -6,9 +6,12 @@ import org.springframework.data.redis.core.BoundValueOperations;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 
-import xcache.RemoteCache;
+import com.alibaba.fastjson.JSONObject;
+import com.lz.components.cache.RemoteCache;
+import com.lz.components.cache.em.CacheParams;
+import com.lz.components.common.exception.LzRuntimeException;
 
-public class SingleRedisCache implements RemoteCache {
+public class SingleRedisCache extends RemoteCache {
 	protected RedisTemplate<Object, Object> redisTemplate;
 
 	public SingleRedisCache(RedisTemplate<Object, Object> redisTemplate) {
@@ -16,39 +19,43 @@ public class SingleRedisCache implements RemoteCache {
 	}
 
 	@Override
-	public void remove(Object key) throws Exception {
+	protected void doRemove(Object key) throws LzRuntimeException {
 		redisTemplate.delete(key);
 	}
 
 	@Override
-	public int size() {
-		return redisTemplate.execute(new RedisCallback<Long>() {
+	public JSONObject size() {
+		JSONObject size = super.size();
+		size.put(CacheParams.SIZE_CAPACITY.NAME, 0);
+		size.put(CacheParams.SIZE_QUANTITY.NAME, redisTemplate.execute(new RedisCallback<Long>() {
 			@Override
 			public Long doInRedis(RedisConnection connection) throws DataAccessException {
 				return connection.dbSize();
 			}
-		}).intValue();
+		}).intValue());
+		size.put(CacheParams.SIZE_MEMORY.NAME, 0);
+		return size;
 	}
 
 	@Override
-	public void clear() throws Exception {
+	public void clear() throws LzRuntimeException {
 		redisTemplate.delete(redisTemplate.keys("*"));
 	}
 
 	@Override
-	public void put(Object key, Object value) throws Exception {
-		redisTemplate.boundValueOps(key).set(value);
+	protected void doPut(Object key, Object value, long expiring, com.lz.components.cache.em.TimeUnit timeUnit)
+			throws LzRuntimeException {
+		if (expiring > 0) {
+			BoundValueOperations<Object, Object> boundValue = redisTemplate.boundValueOps(key);
+			boundValue.set(value);
+			boundValue.expire(expiring, timeUnit.toConcurrent());
+		} else {
+			redisTemplate.boundValueOps(key).set(value);
+		}
 	}
 
 	@Override
-	public void put(Object key, Object value, long expiring, xcache.em.TimeUnit timeUnit) throws Exception {
-		BoundValueOperations<Object, Object> boundValue = redisTemplate.boundValueOps(key);
-		boundValue.set(value);
-		boundValue.expire(expiring, timeUnit.toConcurrent());
-	}
-
-	@Override
-	public Object get(Object key) {
+	protected Object doGet(Object key) {
 		BoundValueOperations<Object, Object> boundValue = redisTemplate.boundValueOps(key);
 		return boundValue != null ? boundValue.get() : null;
 	}
